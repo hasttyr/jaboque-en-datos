@@ -1,0 +1,7 @@
+node_modules/
+.next/
+.vercel/
+.playwright-mcp/
+iot-server/lecturas.jsonl
+*.log
+web/.impeccable/

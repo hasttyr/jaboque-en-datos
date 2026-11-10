@@ -1,0 +1,478 @@
+/* Coreografía de la página. Todo lo que se oculta antes de animarse depende de [data-js],
+   así que sin JavaScript el contenido se ve completo. */
+
+/* =========================================================
+   Superficies del navegador
+   ========================================================= */
+
+::selection {
+  background: var(--iris);
+  color: var(--hueso);
+}
+
+html {
+  scrollbar-color: #ffffff33 var(--vacio);
+  accent-color: var(--iris);
+  caret-color: var(--azafran);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* =========================================================
+   Portada: time-lapse de Jaboque
+   ========================================================= */
+
+.controles-periodo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  margin: 28px 0 24px;
+}
+
+.repetir {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: inherit;
+  font-weight: 500;
+  font-size: 0.9375rem;
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--tinta);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: color-mix(in oklab, var(--tinta) 35%, transparent);
+  cursor: pointer;
+}
+
+.repetir svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: rotate 0.5s var(--expo);
+}
+
+.repetir:hover svg {
+  rotate: -180deg;
+}
+
+.repetir:disabled {
+  cursor: default;
+  color: var(--tinta-suave);
+  text-decoration: none;
+}
+
+.repetir:disabled svg {
+  animation: girar 1.4s linear infinite;
+}
+
+@keyframes girar {
+  to {
+    rotate: -360deg;
+  }
+}
+
+.jaboque__lienzo {
+  position: relative;
+  width: 100%;
+  max-height: 78vh;
+  margin-inline: auto;
+}
+
+.jaboque__capa {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.jaboque__capa[data-estado="oculta"] {
+  visibility: hidden;
+}
+
+.jaboque__capa[data-estado="debajo"] {
+  z-index: 1;
+}
+
+/* El año nuevo avanza desde la ciudad (sureste) sobre el humedal, como lo hizo el cemento. */
+.jaboque__capa[data-estado="activa"] {
+  z-index: 2;
+  animation: avance-ciudad 1.6s var(--expo) both;
+}
+
+@keyframes avance-ciudad {
+  from {
+    clip-path: circle(0% at 92% 98%);
+  }
+  to {
+    clip-path: circle(150% at 92% 98%);
+  }
+}
+
+/* El cemento recién llegado aparece al rojo y se enfría hasta gris concreto. */
+.jaboque__capa[data-estado="activa"] .cemento {
+  animation: fraguar 2.2s ease-out both;
+}
+
+@keyframes fraguar {
+  0%,
+  25% {
+    fill: var(--alerta);
+  }
+  100% {
+    fill: var(--concreto);
+  }
+}
+
+.jaboque__anio {
+  display: inline-block;
+  animation: anio-entra 0.6s var(--expo) both;
+}
+
+@keyframes anio-entra {
+  from {
+    opacity: 0;
+    translate: 0 0.5em;
+    filter: blur(4px);
+  }
+}
+
+.jaboque__lienzo,
+.jaboque__cifra {
+  transition: opacity 0.6s ease;
+}
+
+/* Mientras se prepara el time-lapse no mostramos 2014, para que no "salte" a 1952. */
+[data-js] .jaboque:not([data-listo]) :is(.jaboque__lienzo, .jaboque__cifra) {
+  opacity: 0;
+}
+
+/* =========================================================
+   Río Bogotá: el agua baja y cada estación se enciende al llegar
+   ========================================================= */
+
+.rio__lista::before {
+  transform-origin: top;
+  transition: transform 1.6s cubic-bezier(0.45, 0, 0.2, 1);
+}
+
+/* Corriente: trazos claros que bajan por el río. */
+.rio__lista::after {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 20px;
+  bottom: 20px;
+  width: 4px;
+  border-radius: 2px;
+  background: repeating-linear-gradient(to bottom, transparent 0 22px, #ffffffb3 22px 30px);
+  background-size: 100% 60px;
+  opacity: 0;
+  transition: opacity 0.6s ease 1.4s;
+}
+
+.rio[data-visto] .rio__lista::after {
+  opacity: 0.8;
+  animation: corriente 1.8s linear infinite;
+}
+
+@keyframes corriente {
+  to {
+    background-position: 0 60px;
+  }
+}
+
+.rio__punto,
+.rio__valor,
+.rio__barra {
+  transition-timing-function: var(--expo);
+  transition-delay: calc(var(--i, 0) * 120ms + 150ms);
+}
+
+.rio__punto {
+  transition-property: scale;
+  transition-duration: 0.5s;
+}
+
+.rio__barra {
+  transition-property: transform;
+  transition-duration: 1.1s;
+}
+
+.rio__valor {
+  transition-property: opacity, translate;
+  transition-duration: 0.6s;
+}
+
+.rio__umbral,
+.rio__marca {
+  transition: opacity 0.8s ease 1.6s;
+}
+
+[data-js] .rio:not([data-visto]) .rio__lista::before {
+  transform: scaleY(0);
+}
+
+[data-js] .rio:not([data-visto]) .rio__punto {
+  scale: 0;
+}
+
+[data-js] .rio:not([data-visto]) .rio__barra {
+  transform: scaleX(0);
+}
+
+[data-js] .rio:not([data-visto]) .rio__valor {
+  opacity: 0;
+  translate: -8px 0;
+}
+
+[data-js] .rio:not([data-visto]) :is(.rio__umbral, .rio__marca) {
+  opacity: 0;
+}
+
+/* La estación de Jaboque late cuando el agua llega a ella. */
+.rio[data-visto] .rio__fila--jaboque .rio__punto {
+  animation: aviso 1.2s ease-out calc(var(--i) * 120ms + 600ms) 2;
+}
+
+@keyframes aviso {
+  from {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--alerta) 70%, transparent);
+  }
+  to {
+    box-shadow: 0 0 0 14px transparent;
+  }
+}
+
+/* =========================================================
+   Basura: los puntos caen sobre la ciudad de norte a sur
+   ========================================================= */
+
+.punto {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+[data-js] .arrojo__mapa:not([data-visto]) .punto {
+  opacity: 0;
+}
+
+.arrojo__mapa[data-visto] .punto {
+  animation: caer 0.7s var(--expo) calc(var(--d) * 1ms) both;
+}
+
+.arrojo__mapa[data-visto] .punto--engativa {
+  animation:
+    caer 0.7s var(--expo) calc(var(--d) * 1ms) both,
+    latido-rojo 1.6s ease-out calc(var(--d) * 1ms + 1700ms) 2;
+}
+
+@keyframes caer {
+  from {
+    opacity: 0;
+    translate: 0 -26px;
+    scale: 1.8;
+  }
+}
+
+@keyframes latido-rojo {
+  0% {
+    scale: 1;
+  }
+  20% {
+    scale: 1.9;
+  }
+  100% {
+    scale: 1;
+  }
+}
+
+[data-js] .arrojo__mapa:not([data-visto]) .marca-jaboque {
+  opacity: 0;
+}
+
+.arrojo__mapa[data-visto] .marca-jaboque circle {
+  animation: trazar 1s var(--expo) 1.4s both;
+}
+
+.arrojo__mapa[data-visto] .marca-jaboque text {
+  animation: anio-entra 0.6s var(--expo) 1.9s both;
+}
+
+@keyframes trazar {
+  from {
+    stroke-dasharray: 101 101;
+    stroke-dashoffset: 101;
+  }
+  99% {
+    stroke-dasharray: 101 101;
+    stroke-dashoffset: 0;
+  }
+}
+
+.ranking__barra span,
+.residuos__barra span {
+  transition: transform 1s var(--expo) calc(var(--i, 0) * 80ms + 100ms);
+}
+
+[data-js] :is(.ranking, .residuos):not([data-visto]) :is(.ranking__barra, .residuos__barra) span {
+  transform: scaleX(0);
+}
+
+.cifra-viva {
+  color: var(--alerta);
+}
+
+/* =========================================================
+   Superficie del agua: entrada a la sección de la maqueta
+   ========================================================= */
+
+.superficie {
+  position: absolute;
+  left: 0;
+  top: 1px;
+  width: 100%;
+  height: clamp(60px, 9vw, 120px);
+  translate: 0 -100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.superficie__ola {
+  animation: oleaje linear infinite paused;
+}
+
+.superficie[data-activa] .superficie__ola {
+  animation-play-state: running;
+}
+
+.superficie__ola {
+  fill: none;
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.superficie__ola--atras {
+  stroke: color-mix(in oklab, var(--iris) 55%, transparent);
+  animation-duration: 21s;
+}
+
+.superficie__ola--media {
+  stroke: color-mix(in oklab, var(--espejo) 70%, transparent);
+  animation-duration: 15s;
+  animation-direction: reverse;
+}
+
+.superficie__ola--frente {
+  stroke: color-mix(in oklab, var(--acuatica) 85%, transparent);
+  animation-duration: 11s;
+}
+
+@keyframes oleaje {
+  to {
+    transform: translateX(-1440px);
+  }
+}
+
+/* =========================================================
+   Maqueta: basura que cae, salpica y flota
+   ========================================================= */
+
+.lago__basura {
+  fill: #f1ead2;
+  opacity: 0.92;
+  animation: caer-al-agua 0.55s cubic-bezier(0.55, 0, 1, 0.45) both;
+}
+
+@keyframes caer-al-agua {
+  from {
+    opacity: 0;
+    translate: 0 -60px;
+  }
+}
+
+.lago__flota {
+  animation: flotar var(--dur, 3.5s) ease-in-out var(--fase, 0s) infinite alternate;
+}
+
+@keyframes flotar {
+  from {
+    transform: translateY(-1.5px) rotate(-7deg);
+  }
+  to {
+    transform: translateY(1.5px) rotate(7deg);
+  }
+}
+
+.lago__onda {
+  fill: none;
+  stroke: #e3ecea;
+  stroke-width: 1.5;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: salpicar 1.3s var(--expo) 0.5s both;
+}
+
+@keyframes salpicar {
+  from {
+    opacity: 0.85;
+    scale: 0.15;
+  }
+  to {
+    opacity: 0;
+    scale: 1.6;
+  }
+}
+
+/* =========================================================
+   Menos movimiento: sin desplazamientos ni bucles; color y opacidad se conservan
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0s !important;
+    transition-property: opacity, color, background-color, fill !important;
+    transition-delay: 0s !important;
+  }
+  .jaboque__capa[data-estado="activa"],
+  .superficie__ola,
+  .lago__flota,
+  .rio[data-visto] .rio__lista::after {
+    animation: none !important;
+  }
+}
+
+.seccion.seccion--maqueta {
+  padding-top: clamp(48px, 6vw, 84px);
+}
+
+.campo-particulas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+}

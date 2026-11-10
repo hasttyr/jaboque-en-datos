@@ -1,0 +1,13 @@
+{
+  "name": "maqueta-jaboque-iot",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Servidor local que recibe las lecturas de la maqueta del Humedal Jaboque",
+  "scripts": {
+    "start": "node server.mjs",
+    "demo": "node server.mjs --simular",
+    "simular": "node simulador.mjs"
+  },
+  "engines": { "node": ">=18" }
+}
