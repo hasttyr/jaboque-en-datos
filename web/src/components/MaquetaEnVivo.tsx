@@ -3,6 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { crearSimulador, type Lectura } from "@/lib/simulacion";
 import { Interpolado } from "./movimiento";
+import dynamic from "next/dynamic";
+import { usePuede3D } from "./3d/soporte";
+import type { EstadoLago } from "./3d/Lago3D";
+
+const Lago3D = dynamic(() => import("./3d/Lago3D"), { ssr: false });
 
 type Modo = "conectando" | "conectado" | "demo";
 
@@ -41,6 +46,10 @@ export default function MaquetaEnVivo() {
   const fuente = useRef<EventSource | null>(null);
   const sim = useRef(crearSimulador());
   const forzar = useRef(false);
+  const puede3D = usePuede3D();
+  const escena = useRef<HTMLElement>(null);
+  const estadoLago = useRef<EstadoLago>({ turbidez: 8, tds: 180, basura: 0, objetos: 0, lecturas: 0, demo: false, activo: false });
+  const alArrojar = useRef<((x: number, z: number) => void) | null>(null);
 
   const agregar = useCallback((nuevas: Lectura[]) => {
     setLecturas((prev) => [...prev, ...nuevas].slice(-MAX_PUNTOS));
@@ -110,6 +119,28 @@ export default function MaquetaEnVivo() {
     };
   }, [modo, servidor, agregar, conectar]);
 
+  // En modo demostración, arrojar genera la lectura al instante (el objeto cae ya, no en el próximo ciclo).
+  const arrojarAhora = useCallback(() => {
+    if (modo !== "demo") return;
+    const l = sim.current.siguiente(true);
+    agregar([{ ts: new Date().toISOString(), origen: "demo", ...l }]);
+  }, [modo, agregar]);
+
+  useEffect(() => {
+    const alTocar = () => arrojarAhora();
+    window.addEventListener("lago:arrojar", alTocar);
+    return () => window.removeEventListener("lago:arrojar", alTocar);
+  }, [arrojarAhora]);
+
+  // La escena 3D solo dibuja mientras la sección está en pantalla.
+  useEffect(() => {
+    const el = escena.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([x]) => (estadoLago.current.activo = x.isIntersecting));
+    io.observe(el);
+    return () => io.disconnect();
+  }, [puede3D]);
+
   function guardarServidor(e: React.FormEvent) {
     e.preventDefault();
     const url = borrador.trim() || SERVIDOR_POR_DEFECTO;
@@ -121,6 +152,16 @@ export default function MaquetaEnVivo() {
   }
 
   const ultima = lecturas.at(-1);
+
+  useEffect(() => {
+    const e = estadoLago.current;
+    if (ultima?.turbidez_ntu != null) e.turbidez = ultima.turbidez_ntu;
+    if (ultima?.tds_ppm != null) e.tds = ultima.tds_ppm;
+    if (ultima?.basura_g != null) e.basura = ultima.basura_g;
+    if (ultima?.objetos != null) e.objetos = ultima.objetos;
+    if (ultima) e.lecturas += 1;
+    e.demo = modo === "demo";
+  }, [ultima, modo]);
   const simulado = modo === "demo" || ultima?.origen === "simulador";
   const turbidez = ultima?.turbidez_ntu ?? 8;
   const mezcla = Math.min(100, Math.round((Math.log10(Math.max(1, turbidez)) / Math.log10(300)) * 100));
@@ -156,7 +197,12 @@ export default function MaquetaEnVivo() {
       </div>
 
       <div className="maqueta__cuerpo">
-        <figure className="lago">
+        <figure className="lago" ref={escena}>
+          {puede3D ? (
+            <div className="lago__escena" data-demo={modo === "demo" ? "" : undefined}>
+              <Lago3D estado={estadoLago} alArrojar={alArrojar} />
+            </div>
+          ) : (
           <svg viewBox="0 0 400 240" role="img" aria-label={`${estadoAgua(ultima?.turbidez_ntu)} con ${objetos} objetos flotando`}>
             <path
               className="lago__orilla"
@@ -187,12 +233,14 @@ export default function MaquetaEnVivo() {
               </g>
             ))}
           </svg>
+          )}
           <figcaption>
             {estadoAgua(ultima?.turbidez_ntu)}
-            {objetos > POSICIONES.length && `, ${objetos - POSICIONES.length} objetos más fuera de vista`}
+            {!puede3D && objetos > POSICIONES.length && `, ${objetos - POSICIONES.length} objetos más fuera de vista`}
+            {puede3D && modo === "demo" && <span className="lago__pista">Toca el agua para arrojar un objeto</span>}
           </figcaption>
           {modo === "demo" && (
-            <button type="button" className="boton-primario boton-arrojar" onClick={() => (forzar.current = true)}>
+            <button type="button" className="boton-primario boton-arrojar" onClick={arrojarAhora}>
               Arrojar un objeto al lago
             </button>
           )}

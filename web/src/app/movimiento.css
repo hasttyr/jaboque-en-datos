@@ -26,70 +26,25 @@ html {
 }
 
 /* =========================================================
-   Portada: time-lapse de Jaboque
+   Portada: el scroll es la máquina del tiempo (1952 → 2014)
    ========================================================= */
 
-.controles-periodo {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px 20px;
-  margin: 28px 0 24px;
+/* El recorrido alto da "pista" de scroll; el contenido queda fijo mientras tanto. */
+[data-js] .recorrido {
+  height: 360vh;
 }
 
-.repetir {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font: inherit;
-  font-weight: 500;
-  font-size: 0.9375rem;
-  min-height: 44px;
-  padding: 0 4px;
-  border: 0;
-  background: none;
-  color: var(--tinta);
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  text-decoration-color: color-mix(in oklab, var(--tinta) 35%, transparent);
-  cursor: pointer;
-}
-
-.repetir svg {
-  width: 18px;
-  height: 18px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  transition: rotate 0.5s var(--expo);
-}
-
-.repetir:hover svg {
-  rotate: -180deg;
-}
-
-.repetir:disabled {
-  cursor: default;
-  color: var(--tinta-suave);
-  text-decoration: none;
-}
-
-.repetir:disabled svg {
-  animation: girar 1.4s linear infinite;
-}
-
-@keyframes girar {
-  to {
-    rotate: -360deg;
-  }
+[data-js] .jaboque {
+  position: sticky;
+  top: 80px;
+  height: calc(100svh - 80px);
+  align-content: center;
 }
 
 .jaboque__lienzo {
   position: relative;
   width: 100%;
-  max-height: 78vh;
+  max-height: calc(100svh - 190px);
   margin-inline: auto;
 }
 
@@ -100,65 +55,260 @@ html {
   height: 100%;
 }
 
-.jaboque__capa[data-estado="oculta"] {
-  visibility: hidden;
-}
-
-.jaboque__capa[data-estado="debajo"] {
+/* Capa base del tramo actual. */
+.jaboque[data-tramo="0"] .jaboque__capa[data-indice="0"],
+.jaboque[data-tramo="1"] .jaboque__capa[data-indice="1"] {
   z-index: 1;
 }
 
-/* El año nuevo avanza desde la ciudad (sureste) sobre el humedal, como lo hizo el cemento. */
-.jaboque__capa[data-estado="activa"] {
+/* Capa siguiente: aparece desde la ciudad (sureste) con el radio del scroll. */
+.jaboque[data-tramo="0"] .jaboque__capa[data-indice="1"],
+.jaboque[data-tramo="1"] .jaboque__capa[data-indice="2"] {
   z-index: 2;
-  animation: avance-ciudad 1.6s var(--expo) both;
+  clip-path: circle(calc(var(--radio) * 1%) at 92% 98%);
 }
 
-@keyframes avance-ciudad {
-  from {
-    clip-path: circle(0% at 92% 98%);
+/* Las demás no se ven. */
+.jaboque[data-tramo="0"] .jaboque__capa[data-indice="2"],
+.jaboque[data-tramo="1"] .jaboque__capa[data-indice="0"] {
+  visibility: hidden;
+}
+
+/* El cemento recién llegado está caliente (ámbar) y se enfría a blanco al terminar el tramo. */
+.jaboque[data-tramo="0"] .jaboque__capa[data-indice="1"] .cemento,
+.jaboque[data-tramo="1"] .jaboque__capa[data-indice="2"] .cemento {
+  fill: color-mix(in oklab, var(--azafran) calc(var(--calor) * 100%), var(--concreto));
+}
+
+/* Frente de luz: un anillo ámbar en el borde del avance, recortado a la forma del humedal. */
+.frente {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.jaboque[data-tramo="0"] .jaboque__capa[data-indice="1"] .frente,
+.jaboque[data-tramo="1"] .jaboque__capa[data-indice="2"] .frente {
+  opacity: var(--brillo);
+}
+
+.frente circle {
+  fill: none;
+  r: calc(var(--radio-vb) * 1px);
+}
+
+.frente__halo {
+  stroke: var(--azafran);
+  stroke-width: 160;
+  stroke-opacity: 0.28;
+}
+
+.frente__linea {
+  stroke: #ffe3a3;
+  stroke-width: 12;
+}
+
+/* Año y cifra: cambian en vivo, sin transición (los mueve el scroll). */
+.jaboque__anio {
+  color: var(--azafran);
+}
+
+/* La cifra se calienta a ámbar mientras el cemento avanza. */
+.jaboque__cifra {
+  color: color-mix(in oklab, var(--azafran) calc(var(--brillo, 0) * 85%), var(--concreto));
+}
+
+/* Hasta que el scroll se mide, no mostramos el estado final para que no salte de 2014 a 1952. */
+[data-js] .recorrido:not([data-listo]) .jaboque {
+  opacity: 0;
+}
+
+.recorrido .jaboque {
+  transition: opacity 0.5s ease;
+}
+
+/* ---------- Línea de tiempo ---------- */
+
+.linea-tiempo {
+  position: relative;
+  height: 62px;
+  max-width: 440px;
+  margin: 30px 0 24px;
+}
+
+.linea-tiempo__pista {
+  position: absolute;
+  top: 9px;
+  left: 4%;
+  right: 4%;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--linea);
+  overflow: hidden;
+}
+
+.linea-tiempo__avance {
+  display: block;
+  height: 100%;
+  background: var(--iris);
+  transform-origin: left;
+  transform: scaleX(calc((var(--progreso) - 0.04) / 0.92));
+}
+
+.linea-tiempo button {
+  position: absolute;
+  top: 0;
+  translate: -50% 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 6px;
+  border: 0;
+  background: none;
+  color: var(--ceniza);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.25s ease;
+}
+
+.linea-tiempo button::before {
+  content: "";
+  width: 12px;
+  height: 12px;
+  margin-top: 4px;
+  border-radius: 50%;
+  border: 2px solid var(--ceniza);
+  background: var(--vacio);
+  transition: background 0.25s ease, border-color 0.25s ease, scale 0.3s var(--expo);
+}
+
+.linea-tiempo button[data-pasado]::before {
+  border-color: var(--iris);
+  background: var(--iris);
+}
+
+.linea-tiempo button[aria-pressed="true"] {
+  color: var(--hueso);
+}
+
+.linea-tiempo button[aria-pressed="true"]::before {
+  scale: 1.35;
+  box-shadow: 0 0 0 6px color-mix(in oklab, var(--iris) 30%, transparent);
+}
+
+.linea-tiempo button:hover {
+  color: var(--hueso);
+}
+
+/* ---------- Aviso para deslizar ---------- */
+
+.desliza {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  translate: -50% 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ceniza);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: opacity 0.4s ease;
+}
+
+.desliza[data-oculto] {
+  opacity: 0;
+}
+
+:not([data-js]) .desliza {
+  display: none;
+}
+
+.desliza svg {
+  width: 16px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.desliza line {
+  animation: rueda 1.6s var(--expo) infinite;
+}
+
+@keyframes rueda {
+  0% {
+    translate: 0 0;
+    opacity: 1;
   }
-  to {
-    clip-path: circle(150% at 92% 98%);
-  }
-}
-
-/* El cemento recién llegado aparece al rojo y se enfría hasta gris concreto. */
-.jaboque__capa[data-estado="activa"] .cemento {
-  animation: fraguar 2.2s ease-out both;
-}
-
-@keyframes fraguar {
-  0%,
-  25% {
-    fill: var(--alerta);
+  80% {
+    translate: 0 6px;
+    opacity: 0;
   }
   100% {
-    fill: var(--concreto);
-  }
-}
-
-.jaboque__anio {
-  display: inline-block;
-  animation: anio-entra 0.6s var(--expo) both;
-}
-
-@keyframes anio-entra {
-  from {
+    translate: 0 0;
     opacity: 0;
-    translate: 0 0.5em;
-    filter: blur(4px);
   }
 }
 
-.jaboque__lienzo,
-.jaboque__cifra {
-  transition: opacity 0.6s ease;
+/* ---------- Ajustes de tamaño para que todo quepa en una pantalla ---------- */
+
+[data-js] .jaboque .jaboque__cifra {
+  font-size: clamp(5rem, 10.5vw, 11.5rem);
 }
 
-/* Mientras se prepara el time-lapse no mostramos 2014, para que no "salte" a 1952. */
-[data-js] .jaboque:not([data-listo]) :is(.jaboque__lienzo, .jaboque__cifra) {
-  opacity: 0;
+[data-js] .jaboque .jaboque__unidad {
+  font-size: clamp(1.375rem, 2.3vw, 2.25rem);
+  max-width: 17ch;
+  margin-top: 18px;
+}
+
+[data-js] .jaboque .jaboque__titulo {
+  margin-bottom: 18px;
+}
+
+@media (max-height: 860px) and (min-width: 960px) {
+  [data-js] .jaboque .jaboque__intro {
+    display: none;
+  }
+}
+
+@media (max-width: 959px) {
+  [data-js] .jaboque {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 12px;
+    align-content: stretch;
+    padding-bottom: 56px;
+  }
+  [data-js] .jaboque :is(.jaboque__intro, .leyenda, figcaption) {
+    display: none;
+  }
+  [data-js] .jaboque .jaboque__cifra {
+    font-size: clamp(4.5rem, 22vw, 7rem);
+  }
+  [data-js] .jaboque .linea-tiempo {
+    margin: 18px 0 0;
+  }
+  [data-js] .jaboque__mapa {
+    min-height: 0;
+    display: flex;
+    justify-content: center;
+  }
+  [data-js] .jaboque__lienzo {
+    width: auto;
+    height: 100%;
+    max-height: 100%;
+    max-width: 100%;
+  }
 }
 
 /* =========================================================
@@ -456,7 +606,6 @@ html {
     transition-property: opacity, color, background-color, fill !important;
     transition-delay: 0s !important;
   }
-  .jaboque__capa[data-estado="activa"],
   .superficie__ola,
   .lago__flota,
   .rio[data-visto] .rio__lista::after {
@@ -495,4 +644,86 @@ html {
 [data-js] .impactos:not([data-visto]) li > * {
   opacity: 0;
   translate: 0 14px;
+}
+
+/* ---------- Portada en 3D ---------- */
+
+.lienzo-3d {
+  position: absolute !important;
+  inset: 0 calc(-1 * var(--margen));
+  width: auto !important;
+  height: auto !important;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+
+.jaboque[data-3d] .lienzo-3d {
+  opacity: 1;
+}
+
+.jaboque__texto {
+  position: relative;
+  z-index: 1;
+}
+
+.jaboque[data-3d] .jaboque__lienzo {
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+
+.jaboque[data-3d] figcaption {
+  display: none;
+}
+
+/* Texto legible sobre la escena en celular. */
+@media (max-width: 959px) {
+  .jaboque[data-3d] .jaboque__texto {
+    text-shadow: 0 2px 18px #000;
+  }
+}
+
+/* ---------- Maqueta en 3D ---------- */
+
+.lago {
+  width: 100%;
+}
+
+.lago__escena {
+  position: relative;
+  width: 100%;
+  height: clamp(300px, 40vw, 560px);
+  margin-inline: calc(-1 * clamp(0px, 2vw, 24px));
+}
+
+.lago__escena[data-demo] {
+  cursor: crosshair;
+}
+
+.lago-3d {
+  position: absolute !important;
+  inset: 0;
+}
+
+.lago__pista {
+  display: block;
+  margin-top: 6px;
+  color: var(--ceniza);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+}
+
+@media (min-width: 960px) {
+  .maqueta__cuerpo {
+    grid-template-columns: 7fr 5fr;
+  }
+}
+
+@media (max-width: 959px) {
+  .lago__escena {
+    margin-inline: 0;
+  }
 }
