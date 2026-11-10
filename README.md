@@ -1,5 +1,7 @@
 # Jaboque en datos
 
+**Web publicada:** https://jaboque-en-datos.vercel.app
+
 Proyecto final del curso *Contexto: Ciencia, Tecnología y Sociedad*. Muestra la contaminación del Humedal Jaboque y del río Bogotá con datos abiertos, más una maqueta a escala con sensores en tiempo real.
 
 | Carpeta | Qué es | Dónde corre |
@@ -34,6 +36,10 @@ Formato que envía el ESP32 a `POST /lecturas` (todos los campos son opcionales,
 ```json
 { "turbidez_ntu": 12.4, "tds_ppm": 340, "temperatura_c": 18.2, "basura_g": 85, "objetos": 7 }
 ```
+
+## Publicar cambios
+
+Cada push a `main` publica la web en Vercel automáticamente. Vercel construye desde la carpeta `web/`.
 
 ## Datos abiertos
 
