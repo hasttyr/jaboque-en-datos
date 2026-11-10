@@ -915,30 +915,69 @@ figcaption {
 
 /* ---------- CTS y pie ---------- */
 
-.cts {
-  display: grid;
-  gap: 36px 60px;
-  margin-top: 60px;
+.impactos {
+  list-style: none;
+  padding: 0;
 }
 
-@media (min-width: 800px) {
-  .cts {
-    grid-template-columns: repeat(3, 1fr);
+.impactos li {
+  position: relative;
+  display: grid;
+  gap: 12px 60px;
+  padding: 36px 0;
+}
+
+/* Línea superior de cada fila; se dibuja al entrar en pantalla (ver movimiento.css). */
+.impactos li::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: var(--linea);
+  transform-origin: left;
+}
+
+@media (min-width: 900px) {
+  .impactos li {
+    grid-template-columns: 5fr 7fr;
+    align-items: start;
   }
 }
 
-.cts p {
-  color: var(--niebla-plata);
+.impactos h3 {
+  font-size: clamp(1.75rem, 3vw, 2.625rem);
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+  margin: 0;
+  max-width: 16ch;
+  text-wrap: balance;
 }
 
-.cts strong {
-  display: block;
-  color: var(--hueso);
-  font-size: clamp(1.75rem, 3vw, 2.625rem);
+.impactos p {
+  color: var(--niebla-plata);
+  max-width: 36rem;
+}
+
+.impactos__quien {
+  margin-top: 14px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+}
+
+.impactos p.impactos__quien {
+  color: var(--azafran);
+}
+
+.cierre {
+  margin-top: clamp(60px, 9vw, 120px);
+  max-width: 26ch;
+  font-size: clamp(1.75rem, 3.6vw, 3rem);
   font-weight: 400;
-  letter-spacing: -0.04em;
-  line-height: 1.1;
-  margin-bottom: 18px;
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+  text-wrap: pretty;
 }
 
 .pie {
@@ -992,5 +1031,11 @@ figcaption {
   .cabecera .boton-primario {
     padding: 0 14px;
     font-size: 0.8125rem;
+  }
+}
+
+@media (min-width: 960px) {
+  .seccion--impacto .seccion__encabezado {
+    grid-template-columns: 5fr 7fr;
   }
 }

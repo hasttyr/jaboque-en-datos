@@ -4,8 +4,41 @@ import MaquetaEnVivo from "@/components/MaquetaEnVivo";
 import { MapaArrojo, RankingLocalidades, ResiduosMes } from "@/components/Arrojo";
 import { datosArrojo, datosJaboque, datosResiduos, datosRio } from "@/lib/datos";
 import { FUENTES } from "@/lib/fuentes";
-import { Contador, Superficie } from "@/components/movimiento";
+import { Contador, Revelar, Superficie } from "@/components/movimiento";
 import CampoParticulas from "@/components/CampoParticulas";
+
+const IMPACTOS = [
+  {
+    titulo: "Vecinos que vigilan su propio humedal",
+    texto:
+      "Con unos 220.000 pesos en piezas, un colegio o una junta de acción comunal puede instalar sensores y publicar lecturas cada pocos segundos, en lugar de esperar un informe anual.",
+    quien: "Comunidades, colegios y juntas de acción comunal",
+  },
+  {
+    titulo: "Alertas antes de que el daño sea irreversible",
+    texto:
+      "Un salto brusco en la turbidez o en los sólidos disueltos suele delatar un vertimiento. Detectarlo en minutos permite avisar a la autoridad ambiental mientras todavía se puede encontrar el origen.",
+    quien: "Autoridades ambientales y empresas de acueducto",
+  },
+  {
+    titulo: "Recolección donde de verdad cae la basura",
+    texto:
+      "Cruzar los puntos críticos de arrojo con el peso de la basura que llega al agua ayuda a decidir qué rutas reforzar y dónde poner contenedores.",
+    quien: "Operadores de aseo y alcaldías locales",
+  },
+  {
+    titulo: "Un modelo que se copia a otros humedales",
+    texto:
+      "El código y la guía de construcción son abiertos. La misma maqueta sirve para Juan Amarillo, Córdoba o La Conejera, o para un lago en cualquier ciudad que publique datos abiertos.",
+    quien: "Universidades, semilleros de investigación y otras ciudades",
+  },
+  {
+    titulo: "Educación ambiental que se ve",
+    texto:
+      "Ver cómo se enturbia el agua cuando alguien tira un objeto convence más que una cifra en un informe. La maqueta funciona igual en un aula, una feria de ciencia o un museo.",
+    quien: "Docentes, museos y ferias de ciencia",
+  },
+];
 
 const fmt = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 0 });
 const fecha = (iso: string) =>
@@ -43,6 +76,7 @@ export default async function Inicio() {
         <nav aria-label="Secciones">
           <a href="#rio">Río Bogotá</a>
           <a href="#basura">Basura</a>
+          <a href="#impacto">Impacto</a>
           <a href="#fuentes">Fuentes</a>
           <a href="#maqueta" className="boton-primario">Maqueta en vivo</a>
         </nav>
@@ -121,24 +155,31 @@ export default async function Inicio() {
         </ol>
       </section>
 
-      <section className="seccion seccion--cts" aria-labelledby="titulo-cts">
-        <h2 id="titulo-cts">Por qué un humedal es un problema de ciencia, tecnología y sociedad</h2>
-        <div className="cts">
+      <section id="impacto" className="seccion seccion--impacto" aria-labelledby="titulo-impacto">
+        <div className="seccion__encabezado">
+          <h2 id="titulo-impacto">Un humedal que se mide se puede defender</h2>
           <p>
-            <strong>Ciencia.</strong> Los datos existen: el IDEAM, la Secretaría de Ambiente y la UAESP los publican
-            gratis. Medir no basta; el reto es que alguien los lea y entienda qué está pasando con el agua.
-          </p>
-          <p>
-            <strong>Tecnología.</strong> Un sensor de turbidez cuesta menos que un almuerzo semanal. Con piezas así,
-            un colegio o una junta de acción comunal podría vigilar su propio humedal en vez de esperar un informe
-            anual.
-          </p>
-          <p>
-            <strong>Sociedad.</strong> Jaboque no se llenó de cemento ni de basura por accidente. Fueron decisiones
-            de urbanización, de recolección y de cada persona que tira algo en la orilla. Ver el daño en tiempo real
-            hace más difícil ignorarlo.
+            <span className="seccion__fuente">Ciencia, tecnología y sociedad</span>
+            La maqueta es una prueba de concepto. Lo que demuestra es que vigilar un humedal ya no exige un
+            laboratorio: con datos abiertos y sensores de bajo costo, cualquier persona puede ver lo que le pasa al
+            agua y actuar a tiempo.
           </p>
         </div>
+        <Revelar as="ul" className="impactos" umbral={0.15}>
+          {IMPACTOS.map((impacto, i) => (
+            <li key={impacto.titulo} style={{ "--i": i } as React.CSSProperties}>
+              <h3>{impacto.titulo}</h3>
+              <div>
+                <p>{impacto.texto}</p>
+                <p className="impactos__quien">{impacto.quien}</p>
+              </div>
+            </li>
+          ))}
+        </Revelar>
+        <p className="cierre">
+          Jaboque no se llenó de cemento ni de basura por accidente. Fueron decisiones de urbanización, de recolección
+          y de cada persona que tira algo en la orilla. Ver el daño mientras ocurre hace más difícil ignorarlo.
+        </p>
       </section>
 
       <footer id="fuentes" className="pie">
