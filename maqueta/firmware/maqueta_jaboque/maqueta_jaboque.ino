@@ -10,7 +10,7 @@
     - Adafruit SSD1306
     - Adafruit GFX Library
 
-  Antes de subir: cambia WIFI_NOMBRE, WIFI_CLAVE y SERVIDOR.
+  Antes de subir: copia secretos.ejemplo.h como secretos.h y pon tu WiFi y la IP del portátil.
   La IP del servidor aparece en la consola cuando corres `npm start`.
 */
 
@@ -21,9 +21,9 @@
 #include <Adafruit_SSD1306.h>
 
 // ---------- Configuración ----------
-const char* WIFI_NOMBRE = "carcosa";
-const char* WIFI_CLAVE  = "redforters";
-const char* SERVIDOR    = "http://192.168.1.4:4000/lecturas";  // IP del portátil
+// WIFI_NOMBRE, WIFI_CLAVE y SERVIDOR están en secretos.h (no se sube a GitHub).
+// Si no existe, copia secretos.ejemplo.h como secretos.h y llena tus datos.
+#include "secretos.h"
 const unsigned long INTERVALO_MS = 2000;
 
 // ---------- Pines ----------

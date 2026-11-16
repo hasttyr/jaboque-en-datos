@@ -90,9 +90,11 @@ El ESP32 DevKit V1 de 30 pines tiene un GND a cada lado: el sensor de turbidez u
    `https://espressif.github.io/arduino-esp32/package_esp32_index.json`.
    Luego, en *Herramientas → Placa → Gestor de placas*, instala **esp32** de Espressif.
    En *Herramientas → Gestionar librerías*, instala **Adafruit SSD1306** (acepta instalar también **Adafruit GFX Library**). Hacen falta para compilar, aunque no conectes la pantalla.
-3. Abre `firmware/maqueta_jaboque/maqueta_jaboque.ino` y cambia:
+3. En la carpeta `firmware/maqueta_jaboque/`, copia `secretos.ejemplo.h` como **`secretos.h`** y llénalo:
    - `WIFI_NOMBRE` y `WIFI_CLAVE`: la red WiFi a la que también está conectado el portátil.
    - `SERVIDOR`: la dirección que imprime `npm start` en la línea "ESP32 (misma WiFi)".
+
+   `secretos.h` no se sube a GitHub (está en `.gitignore`), así tu clave del WiFi no queda publicada. Luego abre `maqueta_jaboque.ino`: el Arduino IDE muestra `secretos.h` en una pestaña.
 4. Selecciona la placa **ESP32 Dev Module** y pulsa **Verificar** (✓): compila sin necesidad de tener el ESP32 conectado, así detectas cualquier problema antes.
 5. Conecta el ESP32, elige el puerto COM y pulsa **Subir** (→). Si se queda en "Connecting…", mantén presionado el botón **BOOT** de la placa hasta que empiece a subir.
 6. Abre el *Monitor serie* a 115200 baudios. Debes ver "Pantalla OLED encontrada" (o "Sin pantalla OLED", si no la conectaste) y luego una línea JSON cada 2 segundos.
