@@ -17,9 +17,32 @@ if (!config.token) {
   process.exit(1);
 }
 
+const api = (metodo) => fetch(`https://api.telegram.org/bot${config.token}/${metodo}`).then((r) => r.json());
+
+// Un webhook activo bloquea getUpdates. Solo se borra si la persona lo pide.
+if (process.argv.includes("--borrar-webhook")) {
+  const r = await api("deleteWebhook");
+  console.log(r.ok ? "  ✓ Webhook borrado. Escribe algo en el grupo y vuelve a correr: npm run telegram" : `  ✗ ${r.description}`);
+  process.exit(r.ok ? 0 : 1);
+}
+
 if (config.chats.length === 0) {
-  const res = await fetch(`https://api.telegram.org/bot${config.token}/getUpdates`);
-  const datos = await res.json();
+  const datos = await api("getUpdates");
+  if (!datos.ok && datos.error_code === 409) {
+    const info = await api("getWebhookInfo");
+    console.log(`
+  Este bot tiene un webhook activo: Telegram le entrega los mensajes a
+    ${info.result?.url || "(otra aplicación)"}
+  y mientras tanto no deja leerlos desde aquí.
+
+  · Si el bot es solo para la maqueta, bórralo con:
+      npm run telegram -- --borrar-webhook
+    Después escribe algo en el grupo y vuelve a correr: npm run telegram
+  · Si ese webhook es de otro servicio que sí usas, no lo borres: crea un bot
+    nuevo con @BotFather y pon ese token en .env.
+`);
+    process.exit(1);
+  }
   if (!datos.ok) {
     console.log(`  ✗ Telegram rechazó el token: ${datos.description}`);
     process.exit(1);
