@@ -36,18 +36,32 @@ const valor = (v) => (v >= LIMITE_SENSOR ? `más de ${LIMITE_SENSOR}` : String(M
 const LECTURAS_SEGUIDAS = 3;
 const HISTERESIS = 0.8;
 
-export async function enviarTelegram({ token, chats }, texto) {
+export async function enviarTelegram(config, texto) {
+  const { token, chats } = config;
   if (!token || chats.length === 0) return false;
+  const enviar = (chat_id) =>
+    fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id, text: texto }),
+      signal: AbortSignal.timeout(8000),
+    });
   const resultados = await Promise.all(
-    chats.map(async (chat_id) => {
+    chats.map(async (chat_id, i) => {
       try {
-        const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id, text: texto }),
-          signal: AbortSignal.timeout(8000),
-        });
-        if (!res.ok) console.log(`  ✗ Telegram (${chat_id}) respondió ${res.status}: ${await res.text()}`);
+        let res = await enviar(chat_id);
+        let datos = res.ok ? null : await res.json().catch(() => ({}));
+        // Telegram convierte un grupo en "supergrupo" (por ejemplo, al nombrar administrador al bot)
+        // y le cambia el número. Se usa el nuevo de inmediato y se avisa para actualizar el .env.
+        const nuevo = datos?.parameters?.migrate_to_chat_id;
+        if (nuevo) {
+          console.log(`  ⚠ El grupo ${chat_id} ahora es un supergrupo con el número ${nuevo}.`);
+          console.log(`    Pon TELEGRAM_CHAT_ID=${nuevo} en iot-server/.env para la próxima vez.`);
+          config.chats[i] = String(nuevo);
+          res = await enviar(nuevo);
+          datos = res.ok ? null : await res.json().catch(() => ({}));
+        }
+        if (!res.ok) console.log(`  ✗ Telegram (${config.chats[i]}) respondió ${res.status}: ${JSON.stringify(datos)}`);
         return res.ok;
       } catch (e) {
         console.log(`  ✗ No se pudo enviar a Telegram (${chat_id}): ${e.message}`);

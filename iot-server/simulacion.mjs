@@ -17,10 +17,12 @@ export function crearSimulador() {
 
   return {
     tierra() {
-      turbidez = Math.min(1500, turbidez + 70 + Math.random() * 40);
+      // Una pizca: hacen falta unos 3 clics seguidos para pasar el límite de 50 NTU.
+      turbidez = Math.min(1500, turbidez + 15 + Math.random() * 10);
     },
     sal() {
-      tds = Math.min(1500, tds + 480 + Math.random() * 120);
+      // Un poco de sal: hacen falta unos 4 clics para pasar el límite de 500 ppm.
+      tds = Math.min(1500, tds + 100 + Math.random() * 40);
     },
     limpiar() {
       turbidez = 6;
@@ -28,7 +30,7 @@ export function crearSimulador() {
     },
     siguiente(automatico = true) {
       if (automatico && Math.random() < 0.06 && turbidez < 20) turbidez += 6 + Math.random() * 10;
-      turbidez = Math.max(4, 4 + (turbidez - 4) * 0.97 + (Math.random() - 0.5));
+      turbidez = Math.max(4, 4 + (turbidez - 4) * 0.98 + (Math.random() - 0.5)); // la tierra se asienta poco a poco
       tds = 90 + (tds - 90) * 0.993 + (Math.random() - 0.5) * 2;
       return redondear();
     },

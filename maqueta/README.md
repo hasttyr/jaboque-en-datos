@@ -136,11 +136,13 @@ Las cantidades son estimaciones: pruébalas antes, mirando el valor en la web o 
 4. Corre `npm run telegram` desde la raíz del proyecto. Te muestra el número del grupo, que empieza con `-`. Pégalo en `TELEGRAM_CHAT_ID` dentro de `.env`.
 5. Corre `npm run telegram` otra vez. Debe llegar un mensaje de prueba al grupo.
 
+**Si el grupo cambia de número:** Telegram convierte a veces un grupo en "supergrupo" (por ejemplo, al nombrar administrador al bot) y le asigna un número nuevo que empieza con `-100`. El servidor lo detecta, envía igual al número nuevo y muestra en la consola la línea `TELEGRAM_CHAT_ID=…` que hay que poner en `.env`.
+
 **Usa dos grupos:** uno **de pruebas** (solo el equipo) para ensayar, y el **de la presentación** (con la profesora) solo para ese día. Para cambiar de grupo, cambia `TELEGRAM_CHAT_ID` en `.env` y reinicia el servidor. Así los ensayos no le llenan el celular a la profesora.
 
 En el mismo `.env` se cambian los límites (`UMBRAL_TURBIDEZ`, `UMBRAL_TDS`), cada cuánto se repite el aviso (`REPETIR_MIN`) y cuántos recordatorios como máximo (`MAX_RECORDATORIOS`). La web usa los mismos límites que el servidor. El archivo `.env` no se sube a GitHub porque el token es secreto.
 
-Para probar sin la maqueta, corre `npm run demo` desde la raíz del proyecto. Solas, las lecturas simuladas se mueven un poco pero nunca pasan el límite, así que no le escriben al grupo sin que nadie lo pida. En la pantalla "Maqueta en vivo", pulsa **Echar tierra** o **Echar sal**: a los pocos segundos llega la alerta marcada "(simulación)". **Cambiar el agua** limpia el lago y llega el "✅ volvió a la normalidad".
+Para probar sin la maqueta, corre `npm run demo` desde la raíz del proyecto. Solas, las lecturas simuladas se mueven un poco pero nunca pasan el límite, así que no le escriben al grupo sin que nadie lo pida. En la pantalla "Maqueta en vivo", pulsa **Echar tierra** unas 3 veces seguidas o **Echar sal** unas 4: cada clic sube un poco el valor y, cuando pasa el límite, a los pocos segundos llega la alerta marcada "(simulación)". Si el último clic lo deja justo en el límite, pulsa una vez más. **Cambiar el agua** limpia el lago y llega el "✅ volvió a la normalidad".
 
 > La página pública (Vercel) corre una demostración solo en el navegador: muestra el nivel crítico pero **no** manda mensajes a Telegram. Las alertas siempre salen del servidor del portátil, con `npm run demo` o con la maqueta real.
 

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useMaqueta } from "./ConexionMaqueta";
 import { Interpolado } from "./movimiento";
-import { saturado, LIMITE_SENSOR, type Lectura, type Umbrales } from "@/lib/maqueta";
+import { HISTERESIS, saturado, LIMITE_SENSOR, type Lectura, type Umbrales } from "@/lib/maqueta";
 
 const PUNTOS = 60; // 2 minutos, una lectura cada 2 s
 type Campo = keyof Umbrales;
@@ -66,9 +66,26 @@ function Medida({
   );
 }
 
+const NOMBRES: Record<Campo, [string, string]> = { turbidez_ntu: ["la turbidez", "NTU"], tds_ppm: ["los sólidos disueltos", "ppm"] };
+
+// En crítico, pero ya ningún valor pasa su límite: falta que todo baje del 80 % para volver a normal.
+// Devuelve lo que todavía falta que baje, o null si no se está recuperando.
+function faltaParaNormal(m: ReturnType<typeof useMaqueta>) {
+  if (!m.alerta.critico || !m.ultima) return null;
+  const campos = (Object.keys(NOMBRES) as Campo[]).filter((c) => m.ultima![c] != null);
+  if (campos.some((c) => m.ultima![c]! > m.umbrales[c])) return null;
+  const pendientes = campos.filter((c) => m.ultima![c]! >= m.umbrales[c] * HISTERESIS);
+  return pendientes.map((c) => `${NOMBRES[c][0]} baje de ${Math.round(m.umbrales[c] * HISTERESIS)} ${NOMBRES[c][1]}`);
+}
+
 // Qué decir sobre Telegram, sin prometer un mensaje que no salió.
 function mensajeEstado(m: ReturnType<typeof useMaqueta>) {
   const critico = m.alerta.critico;
+  const falta = faltaParaNormal(m);
+  if (falta)
+    return `Ya está por debajo de los límites. Para evitar alertas que van y vienen, vuelve a la normalidad cuando ${
+      falta.length ? falta.join(" y ") : "llegue la próxima lectura"
+    } (el 80 % del límite).`;
   const regla = "Si la turbidez o los sólidos disueltos pasan su límite durante 3 lecturas seguidas (unos segundos)";
   if (m.modo === "demo")
     return critico
@@ -135,7 +152,9 @@ export default function MaquetaEnVivo() {
       </div>
 
       <div className="maqueta__estado" aria-live="polite">
-        <h2>{critico ? "Nivel crítico" : m.ultima ? "Agua en buen estado" : "Esperando lecturas"}</h2>
+        <h2>
+          {critico ? (faltaParaNormal(m) ? "Saliendo del nivel crítico" : "Nivel crítico") : m.ultima ? "Agua en buen estado" : "Esperando lecturas"}
+        </h2>
         <p>{mensajeEstado(m)}</p>
       </div>
 

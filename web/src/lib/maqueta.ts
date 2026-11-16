@@ -21,7 +21,8 @@ export const saturado = (v?: number) => v != null && v >= LIMITE_SENSOR;
 export const textoValor = (v = 0) => (saturado(v) ? `más de ${LIMITE_SENSOR}` : String(Math.round(v)));
 const CAMPOS = ["turbidez_ntu", "tds_ppm"] as const;
 const LECTURAS_SEGUIDAS = 3;
-const HISTERESIS = 0.8;
+// Para volver a normal, todo debe bajar del 80 % de su límite (evita alertas que van y vienen).
+export const HISTERESIS = 0.8;
 
 export type EstadoAlerta = { seguidas: number; critico: boolean; episodio: number };
 export const SIN_ALERTA: EstadoAlerta = { seguidas: 0, critico: false, episodio: 0 };
@@ -50,10 +51,12 @@ export function crearSimulador() {
 
   return {
     tierra() {
-      turbidez = Math.min(1500, turbidez + 70 + Math.random() * 40);
+      // Una pizca: hacen falta unos 3 clics seguidos para pasar el límite de 50 NTU.
+      turbidez = Math.min(1500, turbidez + 15 + Math.random() * 10);
     },
     sal() {
-      tds = Math.min(1500, tds + 480 + Math.random() * 120);
+      // Un poco de sal: hacen falta unos 4 clics para pasar el límite de 500 ppm.
+      tds = Math.min(1500, tds + 100 + Math.random() * 40);
     },
     limpiar() {
       turbidez = 6;
@@ -62,7 +65,7 @@ export function crearSimulador() {
     siguiente(automatico = true) {
       // Solo, el agua se mueve un poco sin pasar el límite; la tierra y la sal las echa alguien.
       if (automatico && Math.random() < 0.06 && turbidez < 20) turbidez += 6 + Math.random() * 10;
-      turbidez = Math.max(4, 4 + (turbidez - 4) * 0.97 + (Math.random() - 0.5));
+      turbidez = Math.max(4, 4 + (turbidez - 4) * 0.98 + (Math.random() - 0.5)); // la tierra se asienta poco a poco
       tds = 90 + (tds - 90) * 0.993 + (Math.random() - 0.5) * 2;
       return redondear();
     },
