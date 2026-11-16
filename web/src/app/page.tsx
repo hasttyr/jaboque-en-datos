@@ -11,7 +11,7 @@ const IMPACTOS = [
   {
     titulo: "Vecinos que vigilan su propio humedal",
     texto:
-      "Con unos 110.000 pesos en piezas, un colegio o una junta de acción comunal puede medir el agua cada pocos segundos y recibir alertas en el celular, en lugar de esperar un informe anual.",
+      "Con unos 150.000 pesos en piezas y un computador encendido cerca, un colegio o una junta de acción comunal puede medir el agua cada pocos segundos y recibir alertas en el celular, en lugar de esperar un informe anual. Los sensores son de bajo costo: sirven para detectar cambios bruscos, no reemplazan un laboratorio.",
     quien: "Comunidades, colegios y juntas de acción comunal",
   },
   {
@@ -29,7 +29,7 @@ const IMPACTOS = [
   {
     titulo: "Un modelo que se copia a otros humedales",
     texto:
-      "El código y la guía de construcción son abiertos. La misma maqueta sirve para Juan Amarillo, Córdoba o La Conejera, o para un lago en cualquier ciudad que publique datos abiertos.",
+      "El código y la guía de construcción son abiertos (licencia MIT). La misma maqueta sirve para Juan Amarillo, Córdoba o La Conejera, o para un lago en cualquier ciudad que publique datos abiertos.",
     quien: "Universidades, semilleros de investigación y otras ciudades",
   },
   {
@@ -83,9 +83,9 @@ export default async function Inicio() {
                 <div className="encabezado">
                   <h2>El agua de Jaboque termina en un río que ya no respira</h2>
                   <p>
-                    Jaboque desagua en el río Bogotá. El IDEAM mide su oxígeno disuelto de punta a punta: nace en
-                    Villapinzón con {nacimiento.oxigeno} mg/L y, después de atravesar la ciudad, llega a{" "}
-                    {peor.oxigeno} mg/L en {peor.nombre.split(" · ")[0]}. Sin oxígeno no hay peces, ni insectos
+                    Jaboque desagua en el río Bogotá. El IDEAM mide su oxígeno disuelto de punta a punta: en{" "}
+                    {nacimiento.nombre.split(" · ")[0]}, cerca de su nacimiento, tiene {nacimiento.oxigeno} mg/L; en{" "}
+                    {peor.nombre.split(" · ")[0]}, su peor punto, apenas {peor.oxigeno} mg/L. Sin oxígeno no hay peces, ni insectos
                     acuáticos, ni aves que se alimenten de ellos.
                   </p>
                   <p className="nota">

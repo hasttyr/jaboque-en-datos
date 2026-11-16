@@ -3,7 +3,8 @@
 // Reglas, para que no llegue spam:
 //  · Se dispara cuando un valor pasa su límite durante 3 lecturas seguidas (6 s).
 //    Así una burbuja o un movimiento brusco del sensor no manda una alerta falsa.
-//  · Mientras siga crítico, solo manda un recordatorio cada REPETIR_MIN minutos.
+//  · Mientras siga crítico, manda un recordatorio cada REPETIR_MIN minutos, como máximo
+//    MAX_RECORDATORIOS veces (para no escribirle al grupo toda la tarde si el agua queda sucia).
 //  · Cuando baja del 80 % del límite, avisa que volvió a la normalidad.
 //
 // Configuración en iot-server/.env (ver .env.ejemplo).
@@ -19,6 +20,7 @@ export function leerConfig(env = process.env) {
       tds_ppm: Number(env.UMBRAL_TDS ?? 500),
     },
     repetirMin: Number(env.REPETIR_MIN ?? 10),
+    maxRecordatorios: Number(env.MAX_RECORDATORIOS ?? 2),
   };
 }
 
@@ -70,15 +72,16 @@ function lineas(lectura, umbrales, marcar) {
 }
 
 export function crearAlertas(config = leerConfig(), enviar = (t) => enviarTelegram(config, t)) {
-  const { umbrales, repetirMin } = config;
+  const { umbrales, repetirMin, maxRecordatorios } = config;
   let seguidas = 0;
   let critico = false;
   let desde = 0;
   let ultimoAviso = 0;
+  let recordatorios = 0;
 
   return {
     activa: Boolean(config.token && config.chats.length),
-    estado: () => ({ critico, desde: critico ? new Date(desde).toISOString() : null, umbrales }),
+    estado: () => ({ critico, desde: critico ? new Date(desde).toISOString() : null, umbrales, repetirMin, maxRecordatorios }),
 
     evaluar(lectura, ahora = Date.now()) {
       const campos = Object.keys(NOMBRES).filter((c) => lectura[c] != null);
@@ -94,13 +97,15 @@ export function crearAlertas(config = leerConfig(), enviar = (t) => enviarTelegr
         critico = true;
         desde = ahora;
         ultimoAviso = ahora;
+        recordatorios = 0;
         texto = [`🚨 ALERTA · Humedal Jaboque${origen}`, "Nivel crítico de contaminación", ...lineas(lectura, umbrales, true), hora()].join("\n");
       } else if (critico && normal) {
         critico = false;
         const min = Math.max(1, Math.round((ahora - desde) / MINUTO));
         texto = [`✅ Humedal Jaboque volvió a la normalidad${origen}`, ...lineas(lectura, umbrales, false), `Estuvo en nivel crítico ${min} min`, hora()].join("\n");
-      } else if (critico && pasa && ahora - ultimoAviso >= repetirMin * MINUTO) {
+      } else if (critico && pasa && recordatorios < maxRecordatorios && ahora - ultimoAviso >= repetirMin * MINUTO) {
         ultimoAviso = ahora;
+        recordatorios++;
         const min = Math.round((ahora - desde) / MINUTO);
         texto = [`⏰ Sigue en nivel crítico hace ${min} min${origen}`, ...lineas(lectura, umbrales, true), hora()].join("\n");
       }

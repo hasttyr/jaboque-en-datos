@@ -56,7 +56,6 @@ function Pantallas({ pantallas }: { pantallas: Pantalla[] }) {
           history.pushState(null, "", `#${id}`);
           oyentes.forEach((f) => f());
         });
-        window.scrollTo(0, 0);
         if (enfocar) refs.current[id]?.focus({ preventScroll: true });
       };
       document.documentElement.dataset.direccion = destino > indice ? "adelante" : "atras";
@@ -77,11 +76,17 @@ function Pantallas({ pantallas }: { pantallas: Pantalla[] }) {
       const destino = pantallas[indice + paso];
       if (!paso || !destino) return;
       e.preventDefault();
-      ir(destino.id, false);
+      // Si el foco estaba dentro de la pantalla que se oculta, pasa a la nueva (si no, se perdería).
+      ir(destino.id, refs.current[activa]?.contains(document.activeElement) ?? false);
     };
     window.addEventListener("keydown", tecla);
     return () => window.removeEventListener("keydown", tecla);
-  }, [indice, pantallas, ir]);
+  }, [activa, indice, pantallas, ir]);
+
+  // Cada pantalla abre desde arriba, también si se llega por un enlace (#fuentes) o con "atrás".
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [activa]);
 
   // Aviso de nivel crítico en cualquier pantalla que no sea la maqueta. Se cierra por episodio.
   const [cerrado, setCerrado] = useState(0);
@@ -108,6 +113,7 @@ function Pantallas({ pantallas }: { pantallas: Pantalla[] }) {
               <a
                 key={p.id}
                 href={`#${p.id}`}
+                aria-label={p.id === "maqueta" && estadoLago === "critico" ? `${p.nombre}: nivel crítico` : p.nombre}
                 aria-current={p.id === activa ? "page" : undefined}
                 data-solo-escritorio={p.soloEscritorio ? "" : undefined}
                 onClick={(e) => {
@@ -120,7 +126,7 @@ function Pantallas({ pantallas }: { pantallas: Pantalla[] }) {
                 <span className="pestana__corto" aria-hidden>
                   {p.corto ?? p.nombre}
                 </span>
-                {p.id === "maqueta" && <i className="pulso" aria-label={estadoLago === "critico" ? "nivel crítico" : undefined} />}
+                {p.id === "maqueta" && <i className="pulso" aria-hidden />}
               </a>
             ))}
           </nav>
@@ -140,7 +146,7 @@ function Pantallas({ pantallas }: { pantallas: Pantalla[] }) {
           </section>
         ))}
 
-        <div className="paginador" aria-label="Cambiar de pantalla">
+        <div className="paginador" role="group" aria-label="Cambiar de pantalla">
           <button type="button" onClick={() => ir(pantallas[indice - 1].id)} disabled={indice === 0} aria-label="Pantalla anterior">
             <svg viewBox="0 0 24 24" aria-hidden><path d="M15 5l-7 7 7 7" /></svg>
           </button>
@@ -160,7 +166,7 @@ function Pantallas({ pantallas }: { pantallas: Pantalla[] }) {
         {avisar && (
           <div className="aviso" role="alert">
             <p>
-              <strong>El lago llegó a nivel crítico{simulado ? " (simulación)" : ""}.</strong> Turbidez{" "}
+              <strong>La maqueta llegó a nivel crítico{simulado ? " (simulación)" : ""}.</strong> Turbidez{" "}
               {textoValor(ultima?.turbidez_ntu)} NTU, sólidos disueltos {textoValor(ultima?.tds_ppm)} ppm.
             </p>
             <button type="button" className="aviso__ir" onClick={() => ir("maqueta")}>

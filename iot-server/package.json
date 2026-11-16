@@ -7,7 +7,6 @@
   "scripts": {
     "start": "node server.mjs",
     "demo": "node server.mjs --simular",
-    "simular": "node simulador.mjs",
     "telegram": "node telegram.mjs"
   },
   "engines": {

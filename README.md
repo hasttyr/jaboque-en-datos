@@ -26,7 +26,7 @@ En modo demo, la pantalla "Maqueta en vivo" debe decir *Servidor conectado con l
 ## Con la maqueta real
 
 1. `npm start`. Anota la IP que aparece en la línea "ESP32 (misma WiFi)".
-2. Pon esa IP en el firmware (`maqueta/firmware/maqueta_jaboque/maqueta_jaboque.ino`) y súbelo al ESP32.
+2. Pon esa IP en `maqueta/firmware/maqueta_jaboque/secretos.h` (cópialo de `secretos.ejemplo.h`) y sube el firmware al ESP32. Los pasos están en `maqueta/README.md`.
 3. Conecta el ESP32: empieza a enviar lecturas solo, y la web dice *Maqueta conectada*.
 
 Para las alertas de Telegram, sigue los pasos de `maqueta/README.md` → *Configurar las alertas de Telegram*. El asistente también corre desde la raíz con `npm run telegram`.
@@ -49,3 +49,7 @@ La web consulta los portales al compilar y luego una vez al día. Si un portal n
 - UAESP: residuos recogidos por mes (datosabiertos.bogota.gov.co, API CKAN)
 - Puntos críticos de arrojo clandestino (datosabiertos.bogota.gov.co, GeoJSON)
 - Cobertura vegetal del Humedal Jaboque 1952, 1976 y 2014 (datosabiertos.bogota.gov.co, GeoJSON)
+
+## Licencia
+
+El código y la guía de construcción son abiertos, con [licencia MIT](LICENSE).

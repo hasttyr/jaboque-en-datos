@@ -10,7 +10,7 @@
   --espuma: #f2f5e8;
   --papel: #e9ecdf;
   --junco: #2fbf71;
-  --agua-limpia: #2f8fd0;
+  --agua-limpia: #1d6aa0; /* azul agua; con texto claro encima da 5,2:1 de contraste */
   --lodo: #6e4520;
   --senal: #ff5b14;
   --buchon: #c9b8ff;
@@ -43,7 +43,7 @@
   --fondo: var(--papel);
   --tinta: var(--tinta-oscura);
   --acento: var(--agua-limpia);
-  --alerta: #d6400a;
+  --alerta: #b23400;
 }
 
 .estacion[data-pantalla="basura"] {
@@ -56,7 +56,7 @@
 .estacion[data-pantalla="maqueta"] {
   --fondo: color-mix(in oklab, var(--agua-limpia), var(--lodo) calc(var(--sucio, 0) * 100%));
   --tinta: var(--espuma);
-  --suave: color-mix(in oklab, var(--tinta) 85%, var(--fondo));
+  --suave: color-mix(in oklab, var(--tinta) 92%, var(--fondo));
   --linea: color-mix(in oklab, var(--tinta) 30%, transparent);
 }
 
@@ -390,8 +390,8 @@ ol {
 .aviso__cerrar {
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border: 0;
   border-radius: 50%;
   background: transparent;
@@ -1064,6 +1064,11 @@ html[data-direccion="atras"]::view-transition-new(root) {
   border: 1px solid var(--linea);
   border-radius: 999px;
   background: color-mix(in oklab, var(--tinta-oscura) 30%, transparent);
+}
+
+.servidor__nota {
+  max-width: 34ch;
+  color: var(--suave);
 }
 
 .servidor button {

@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1010" width="1200" height="1010" font-family="Segoe UI, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1040" width="1200" height="1040" font-family="Segoe UI, Arial, sans-serif">
   <title>Diagrama de conexiones de la maqueta del Humedal Jaboque</title>
-  <rect width="1200" height="1010" fill="#ffffff"/>
+  <rect width="1200" height="1040" fill="#ffffff"/>
 
   <!-- ===== Título ===== -->
   <text x="40" y="48" font-size="28" font-weight="700" fill="#12241c">Maqueta del Humedal Jaboque: conexiones</text>
@@ -31,7 +31,7 @@
   <g fill="none" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
     <!-- Señal A → 10 kΩ → nodo → GPIO 34 -->
     <polyline points="300,470 340,470 340,250 495,250" stroke="#c99700"/>
-    <!-- 20 kΩ: del nodo a GND -->
+    <!-- 10 kΩ: del nodo a GND -->
     <polyline points="440,250 440,550" stroke="#222222"/>
     <!-- GND del sensor → GND izquierdo -->
     <polyline points="300,500 400,500 400,550 495,550" stroke="#222222"/>
@@ -43,12 +43,12 @@
     <rect x="331" y="330" width="18" height="70" rx="3" fill="#f3e3c2" stroke="#12241c" stroke-width="2"/>
     <text x="358" y="362">10 kΩ</text>
     <rect x="431" y="370" width="18" height="70" rx="3" fill="#f3e3c2" stroke="#12241c" stroke-width="2"/>
-    <text x="424" y="410" fill="#12241c" text-anchor="end">20 kΩ</text>
+    <text x="424" y="410" fill="#12241c" text-anchor="end">10 kΩ</text>
   </g>
   <circle cx="440" cy="250" r="6" fill="#12241c"/>
   <circle cx="440" cy="550" r="6" fill="#12241c"/>
   <text x="328" y="300" font-size="13" fill="#4b5563" text-anchor="end">divisor de voltaje:</text>
-  <text x="328" y="317" font-size="13" fill="#4b5563" text-anchor="end">baja 4,5 V a 3 V</text>
+  <text x="328" y="317" font-size="13" fill="#4b5563" text-anchor="end">baja 4,5 V a 2,25 V</text>
 
   <!-- ===== Cables del sensor TDS (derecha) ===== -->
   <g fill="none" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
@@ -194,10 +194,12 @@
     <text x="60" y="925" font-weight="700">Antes de conectar</text>
     <text x="60" y="951">• Guíate por el nombre impreso en cada pin: el orden cambia entre modelos de ESP32.</text>
     <text x="60" y="975">• Solo usa D34 y D35 para las señales: son entradas analógicas que funcionan con WiFi activo.</text>
-    <text x="60" y="999">• El divisor (10 kΩ y 20 kΩ) es obligatorio: sin él, el sensor de turbidez puede dañar el ESP32.</text>
+    <text x="60" y="1023">• Conecta el USB al final, con todo revisado.</text>
+    <text x="60" y="999">• El divisor (dos de 10 kΩ) es obligatorio: sin él, el sensor de turbidez puede dañar el ESP32.</text>
     <text x="760" y="925" font-weight="700">Pantalla (opcional)</text>
     <text x="760" y="951">• Su VCC y GND van a los mismos 3V3 y GND que el</text>
     <text x="760" y="971">  sensor TDS: suelda una "Y" en cada cable.</text>
-    <text x="760" y="995">• Conecta el USB al final, con todo revisado.</text>
+    <text x="760" y="991">• El orden de sus pines cambia entre marcas:</text>
+    <text x="760" y="1007">  guíate por lo impreso en la pantalla.</text>
   </g>
 </svg>

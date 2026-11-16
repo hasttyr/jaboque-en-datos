@@ -14,10 +14,16 @@ import os from "node:os";
 import { appendFile } from "node:fs/promises";
 import { crearSimulador } from "./simulacion.mjs";
 import { cargarEnv } from "./env.mjs";
-import { crearAlertas } from "./alertas.mjs";
+import { crearAlertas, enviarTelegram, leerConfig } from "./alertas.mjs";
 
 cargarEnv();
-const alertas = crearAlertas();
+const configAlertas = leerConfig();
+// Cada mensaje a Telegram le avisa a la web si salió o no (por ejemplo, si el portátil no tiene internet).
+const alertas = crearAlertas(configAlertas, async (texto) => {
+  if (!alertas.activa) return; // sin Telegram configurado, la alerta solo queda en la consola
+  const ok = await enviarTelegram(configAlertas, texto);
+  difundir("telegram", { ok, ts: new Date().toISOString() });
+});
 
 const PUERTO = Number(process.env.PUERTO ?? 4000);
 const ARCHIVO = new URL("./lecturas.jsonl", import.meta.url);
@@ -45,20 +51,26 @@ function validar(cuerpo) {
   return { lectura, errores };
 }
 
+function difundir(evento, datos) {
+  const msg = `event: ${evento}\ndata: ${JSON.stringify(datos)}\n\n`;
+  for (const res of clientes) res.write(msg);
+}
+
 function registrar(lectura) {
   historial.push(lectura);
   if (historial.length > HISTORIAL_MAX) historial.shift();
-  const msg = `event: lectura\ndata: ${JSON.stringify(lectura)}\n\n`;
-  for (const res of clientes) res.write(msg);
   appendFile(ARCHIVO, JSON.stringify(lectura) + "\n").catch(() => {});
   alertas.evaluar(lectura);
+  // La web muestra el estado crítico que decide el servidor: así coincide con Telegram y la pantalla.
+  difundir("lectura", { ...lectura, critico: alertas.estado().critico });
 }
 
 function cors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  // Permite que la web pública (https) consulte este servidor en la red local.
+  // Para que Chrome deje que una página de internet consulte este servidor local. Aun así, el
+  // navegador puede pedir permiso de "red local": por eso conviene presentar desde http://localhost:3000.
   res.setHeader("Access-Control-Allow-Private-Network", "true");
 }
 
@@ -86,6 +98,9 @@ const servidor = http.createServer((req, res) => {
       } catch {
         return json(res, 400, { ok: false, error: "El cuerpo no es JSON válido" });
       }
+      if (!datos || typeof datos !== "object" || Array.isArray(datos)) {
+        return json(res, 400, { ok: false, error: "El cuerpo debe ser un objeto JSON" });
+      }
       const { lectura, errores } = validar(datos);
       if (errores.length) return json(res, 422, { ok: false, errores });
       registrar(lectura);
@@ -102,8 +117,11 @@ const servidor = http.createServer((req, res) => {
       "Cache-Control": "no-cache",
       Connection: "keep-alive",
     });
-    // Qué puede hacer este servidor: la web lo usa para mostrar los botones y decir si salió la alerta.
-    res.write(`event: config\ndata: ${JSON.stringify({ simulando: Boolean(sim), telegram: alertas.activa })}\n\n`);
+    // Lo que la web necesita saber de este servidor: si simula (para mostrar los botones), si manda
+    // a Telegram, sus límites (pueden cambiar en .env) y si el lago ya está en nivel crítico.
+    const { critico, umbrales, repetirMin, maxRecordatorios } = alertas.estado();
+    const config = { simulando: Boolean(sim), telegram: alertas.activa, umbrales, critico, repetirMin, maxRecordatorios };
+    res.write(`event: config\ndata: ${JSON.stringify(config)}\n\n`);
     res.write(`event: historial\ndata: ${JSON.stringify(historial.slice(-60))}\n\n`);
     clientes.add(res);
     const latido = setInterval(() => res.write(": latido\n\n"), 15000);

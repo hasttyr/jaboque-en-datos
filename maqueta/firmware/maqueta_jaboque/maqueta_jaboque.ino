@@ -35,13 +35,19 @@ const int PIN_SCL      = 22;
 const int PIN_LED      = 2;   // LED integrado: parpadea en cada envío
 
 // ---------- Calibración (ver maqueta/README.md) ----------
-const float DIVISOR_TURBIDEZ = 1.5;   // divisor 10k/20k: V_sensor = V_pin * 1.5
-const float AJUSTE_TURBIDEZ  = 0.0;   // voltios a sumar para que el agua limpia lea ~0 NTU
-const float TEMPERATURA_AGUA = 18.0;  // °C; el agua de la llave en Bogotá está entre 15 y 20
+// Divisor de dos resistencias iguales (10 kΩ + 10 kΩ): el pin recibe la mitad del voltaje.
+// Así los 4,5 V del sensor quedan en 2,25 V, dentro de la zona en que el ADC del ESP32 es preciso.
+const float DIVISOR_TURBIDEZ = 2.0;   // V_sensor = V_pin * 2
+// Con agua limpia, la curva espera 4,2 V. Mira en el monitor serie el voltaje del sensor con agua
+// limpia y pon aquí 4,2 menos ese valor (por ejemplo, si marca 4,05 V, pon 0.15).
+const float AJUSTE_TURBIDEZ  = 0.0;
+// Temperatura del agua del recipiente, para corregir el TDS. Mídela con un termómetro si puedes;
+// el agua de la llave en Bogotá suele estar entre 15 y 20 °C.
+const float TEMPERATURA_AGUA = 18.0;
 
 // Tope de lo que los sensores miden de verdad (según el fabricante). Por encima, el agua
 // tapa toda la luz (turbidez) o la placa llega a su voltaje máximo (TDS): se envía el tope
-// y la web, la pantalla y Telegram lo muestran como "más de 1000".
+// y la web y Telegram lo muestran como "más de 1000"; la pantalla, como ">1000".
 const float LIMITE_TURBIDEZ = 1000.0;  // NTU
 const float LIMITE_TDS      = 1000.0;  // ppm
 
@@ -66,8 +72,12 @@ float voltajePromedio(int pin) {
   return (suma / (float)MUESTRAS) / 1000.0;
 }
 
-float leerTurbidez() {
-  float v = voltajePromedio(PIN_TURBIDEZ) * DIVISOR_TURBIDEZ + AJUSTE_TURBIDEZ;
+// Voltaje real a la salida del sensor de turbidez (antes del divisor), ya con el ajuste.
+float voltajeTurbidez() {
+  return voltajePromedio(PIN_TURBIDEZ) * DIVISOR_TURBIDEZ + AJUSTE_TURBIDEZ;
+}
+
+float leerTurbidez(float v) {
   // Curva del fabricante (válida aprox. entre 2.5 V y 4.2 V).
   if (v >= 4.2) return 0;
   if (v < 2.5) return LIMITE_TURBIDEZ;
@@ -129,26 +139,31 @@ void mostrar(float turbidez, float tds) {
   pantalla.display();
 }
 
-void conectarWiFi() {
-  if (WiFi.status() == WL_CONNECTED) return;
-  Serial.printf("Conectando a %s", WIFI_NOMBRE);
-  WiFi.begin(WIFI_NOMBRE, WIFI_CLAVE);
-  for (int i = 0; i < 40 && WiFi.status() != WL_CONNECTED; i++) {
-    delay(250);
-    Serial.print(".");
+const unsigned long REINTENTO_WIFI_MS = 15000;
+
+// Revisa el WiFi sin bloquear: mientras busca la red, la maqueta sigue leyendo y mostrando.
+void revisarWiFi() {
+  static wl_status_t anterior = WL_IDLE_STATUS;
+  static unsigned long ultimoIntento = 0;
+  wl_status_t estado = WiFi.status();
+  if (estado == WL_CONNECTED) {
+    if (anterior != WL_CONNECTED) {
+      Serial.print("WiFi conectado. IP del ESP32: ");
+      Serial.println(WiFi.localIP());
+    }
+  } else if (millis() - ultimoIntento > REINTENTO_WIFI_MS) {
+    ultimoIntento = millis();
+    Serial.printf("Buscando la red %s...\n", WIFI_NOMBRE);
+    WiFi.disconnect();
+    WiFi.begin(WIFI_NOMBRE, WIFI_CLAVE);
   }
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.print(" conectado: ");
-    Serial.println(WiFi.localIP());
-  } else {
-    Serial.println(" sin conexión, reintento luego");
-  }
+  anterior = estado;
 }
 
 void setup() {
   Serial.begin(115200);
   pinMode(PIN_LED, OUTPUT);
-  analogSetAttenuation(ADC_11db);  // rango 0–3.3 V
+  analogSetAttenuation(ADC_11db);  // mide hasta unos 3,1 V; es preciso hasta unos 2,45 V
 
   // La pantalla es opcional: si no responde en el bus I2C, el resto funciona igual.
   Wire.begin(PIN_SDA, PIN_SCL);
@@ -164,7 +179,9 @@ void setup() {
     pantalla.display();
   }
 
-  conectarWiFi();
+  WiFi.mode(WIFI_STA);
+  WiFi.setAutoReconnect(true);
+  WiFi.begin(WIFI_NOMBRE, WIFI_CLAVE);
 }
 
 void loop() {
@@ -172,12 +189,14 @@ void loop() {
   if (millis() - ultimoEnvio < INTERVALO_MS) return;
   ultimoEnvio = millis();
 
-  float turbidez = leerTurbidez();
+  float vTurbidez = voltajeTurbidez();
+  float turbidez = leerTurbidez(vTurbidez);
   float tds = leerTDS();
   String json = "{\"turbidez_ntu\":" + String(turbidez, 1) + ",\"tds_ppm\":" + String(tds, 0) + "}";
-  Serial.println(json);
+  // El voltaje sirve para calibrar (ver AJUSTE_TURBIDEZ); no se envía al servidor.
+  Serial.printf("%s   (sensor de turbidez: %.2f V)\n", json.c_str(), vTurbidez);
 
-  conectarWiFi();
+  revisarWiFi();
   if (WiFi.status() != WL_CONNECTED) {
     conexion = SIN_WIFI;
     mostrar(turbidez, tds);
@@ -185,7 +204,9 @@ void loop() {
   }
 
   HTTPClient http;
-  http.setTimeout(1500);  // si el portátil no responde, no bloquear la maqueta
+  // Si el portátil está apagado o la IP es otra, no bloquear la maqueta más de 1,5 s.
+  http.setConnectTimeout(1500);
+  http.setTimeout(1500);
   http.begin(SERVIDOR);
   http.addHeader("Content-Type", "application/json");
   int codigo = http.POST(json);
