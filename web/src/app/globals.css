@@ -1147,6 +1147,13 @@ html[data-direccion="atras"]::view-transition-new(root) {
   font-variant-numeric: tabular-nums;
 }
 
+.medida__mas {
+  font-size: 0.3em;
+  font-weight: 600;
+  font-stretch: 75%;
+  margin-right: 0.2em;
+}
+
 .medida__valor small {
   font-size: 0.3em;
   font-weight: 600;

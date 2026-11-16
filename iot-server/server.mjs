@@ -90,7 +90,8 @@ const servidor = http.createServer((req, res) => {
       if (errores.length) return json(res, 422, { ok: false, errores });
       registrar(lectura);
       console.log(`← ${lectura.origen}`, JSON.stringify(lectura));
-      json(res, 201, { ok: true, lectura });
+      // critico: lo usa la pantalla de la maqueta para mostrar el mismo estado que la web.
+      json(res, 201, { ok: true, lectura, critico: alertas.estado().critico });
     });
     return;
   }

@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { flushSync } from "react-dom";
 import ConexionMaqueta, { useMaqueta } from "./ConexionMaqueta";
-import { sucio } from "@/lib/maqueta";
+import { sucio, textoValor } from "@/lib/maqueta";
 
 export type Pantalla = {
   id: string;
@@ -161,7 +161,7 @@ function Pantallas({ pantallas }: { pantallas: Pantalla[] }) {
           <div className="aviso" role="alert">
             <p>
               <strong>El lago llegó a nivel crítico{simulado ? " (simulación)" : ""}.</strong> Turbidez{" "}
-              {Math.round(ultima?.turbidez_ntu ?? 0)} NTU, sólidos disueltos {Math.round(ultima?.tds_ppm ?? 0)} ppm.
+              {textoValor(ultima?.turbidez_ntu)} NTU, sólidos disueltos {textoValor(ultima?.tds_ppm)} ppm.
             </p>
             <button type="button" className="aviso__ir" onClick={() => ir("maqueta")}>
               Ver la maqueta

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useMaqueta } from "./ConexionMaqueta";
 import { Interpolado } from "./movimiento";
-import { UMBRALES, type Lectura } from "@/lib/maqueta";
+import { saturado, LIMITE_SENSOR, UMBRALES, type Lectura } from "@/lib/maqueta";
 
 const PUNTOS = 60; // 2 minutos, una lectura cada 2 s
 
@@ -43,7 +43,17 @@ function Medida({
     <div className="medida" data-pasa={pasa ? "" : undefined}>
       <h3>{nombre}</h3>
       <p className="medida__valor">
-        {v != null ? <Interpolado valor={v} decimales={decimales} /> : "–"}
+        {v == null ? (
+          "–"
+        ) : saturado(v) ? (
+          // El sensor llegó a su tope: el valor real puede ser mayor.
+          <>
+            <span className="medida__mas">más de</span>
+            {LIMITE_SENSOR}
+          </>
+        ) : (
+          <Interpolado valor={v} decimales={decimales} />
+        )}
         <small>{unidad}</small>
       </p>
       <Serie lecturas={lecturas} campo={campo} />

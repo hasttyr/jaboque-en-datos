@@ -10,6 +10,11 @@ export type Lectura = {
 };
 
 export const UMBRALES = { turbidez_ntu: 50, tds_ppm: 500 } as const;
+
+// Lo máximo que miden los sensores de la maqueta (NTU y ppm). En el tope, el valor real puede ser mayor.
+export const LIMITE_SENSOR = 1000;
+export const saturado = (v?: number) => v != null && v >= LIMITE_SENSOR;
+export const textoValor = (v = 0) => (saturado(v) ? `más de ${LIMITE_SENSOR}` : String(Math.round(v)));
 const CAMPOS = ["turbidez_ntu", "tds_ppm"] as const;
 const LECTURAS_SEGUIDAS = 3;
 const HISTERESIS = 0.8;
@@ -33,14 +38,18 @@ export function crearSimulador() {
   let turbidez = 6;
   let tds = 90;
 
-  const redondear = () => ({ turbidez_ntu: Math.round(turbidez * 10) / 10, tds_ppm: Math.round(tds) });
+  // Igual que los sensores reales, no pasa de 1000 (NTU o ppm).
+  const redondear = () => ({
+    turbidez_ntu: Math.round(Math.min(turbidez, LIMITE_SENSOR) * 10) / 10,
+    tds_ppm: Math.round(Math.min(tds, LIMITE_SENSOR)),
+  });
 
   return {
     tierra() {
-      turbidez += 70 + Math.random() * 40;
+      turbidez = Math.min(1500, turbidez + 70 + Math.random() * 40);
     },
     sal() {
-      tds += 480 + Math.random() * 120;
+      tds = Math.min(1500, tds + 480 + Math.random() * 120);
     },
     limpiar() {
       turbidez = 6;

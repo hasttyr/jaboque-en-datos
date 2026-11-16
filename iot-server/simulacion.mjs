@@ -9,14 +9,18 @@ export function crearSimulador() {
   let turbidez = 6; // NTU, agua casi limpia
   let tds = 90; // ppm, agua de la llave en Bogotá
 
-  const redondear = () => ({ turbidez_ntu: Math.round(turbidez * 10) / 10, tds_ppm: Math.round(tds) });
+  // Igual que los sensores reales, no pasa de 1000 (NTU o ppm).
+  const redondear = () => ({
+    turbidez_ntu: Math.round(Math.min(turbidez, 1000) * 10) / 10,
+    tds_ppm: Math.round(Math.min(tds, 1000)),
+  });
 
   return {
     tierra() {
-      turbidez += 70 + Math.random() * 40;
+      turbidez = Math.min(1500, turbidez + 70 + Math.random() * 40);
     },
     sal() {
-      tds += 480 + Math.random() * 120;
+      tds = Math.min(1500, tds + 480 + Math.random() * 120);
     },
     limpiar() {
       turbidez = 6;

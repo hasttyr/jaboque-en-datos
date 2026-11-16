@@ -27,6 +27,10 @@ const NOMBRES = {
   tds_ppm: ["Sólidos disueltos", "ppm"],
 };
 
+// Lo máximo que miden los sensores de la maqueta. En el tope, el valor real puede ser mayor.
+const LIMITE_SENSOR = 1000;
+const valor = (v) => (v >= LIMITE_SENSOR ? `más de ${LIMITE_SENSOR}` : String(Math.round(v)));
+
 const LECTURAS_SEGUIDAS = 3;
 const HISTERESIS = 0.8;
 
@@ -61,7 +65,7 @@ function lineas(lectura, umbrales, marcar) {
     .filter(([campo]) => lectura[campo] != null)
     .map(([campo, [nombre, unidad]]) => {
       const pasa = lectura[campo] > umbrales[campo];
-      return `${marcar && pasa ? "⚠️ " : ""}${nombre}: ${Math.round(lectura[campo])} ${unidad} (límite ${umbrales[campo]})`;
+      return `${marcar && pasa ? "⚠️ " : ""}${nombre}: ${valor(lectura[campo])} ${unidad} (límite ${umbrales[campo]})`;
     });
 }
 

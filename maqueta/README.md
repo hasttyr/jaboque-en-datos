@@ -33,19 +33,31 @@ Un modelo a escala del humedal con dos sensores sumergidos que miden qué tan co
 
 Precios aproximados en Bogotá (tiendas de la calle 19 o en línea), noviembre de 2026. No incluye herramientas: cautín, estaño, termoencogible y silicona.
 
-| Componente | Para qué | Precio aprox. (COP) |
-|---|---|---|
-| ESP32 DevKit V1 + cable USB **de datos** (no solo de carga) | Lee los sensores y envía por WiFi | 30.000 |
-| Sensor de turbidez analógico (tipo DFRobot SEN0189) | Qué tan sucia se ve el agua | 35.000 |
-| Sensor TDS Gravity analógico (3,3–5 V), con su sonda | Sólidos disueltos | 35.000 |
-| 1 resistencia de 10 kΩ y 1 de 20 kΩ (o dos de 10 kΩ en serie) | Divisor de voltaje del sensor de turbidez | 500 |
-| 6 cables dupont hembra-hembra | Unir los sensores al ESP32 | 3.000 |
-| Recipiente plástico transparente (unos 6 L, ~30 × 20 × 12 cm) | El lago | 15.000 |
-| **Total** | | **≈ 120.000** |
+| Cant. | Componente | Para qué | Precio aprox. (COP) |
+|---|---|---|---|
+| 1 | **ESP32 DevKit V1 de 30 pines** (15 por lado) con **ESP32-WROOM-32** (o 32D / 32E) | Lee los sensores, maneja la pantalla y envía por WiFi | 25.000 – 35.000 |
+| 1 | Cable USB **de datos** (no solo de carga), del tipo que use la placa: micro-USB o USB-C | Corriente y subir el programa desde el portátil | 5.000 – 10.000 |
+| 1 | Sensor de turbidez analógico (tipo DFRobot SEN0189), con su placa adaptadora | Qué tan sucia se ve el agua | 35.000 |
+| 1 | Sensor TDS Gravity analógico (3,3–5 V), con su sonda y su placa | Sólidos disueltos | 35.000 |
+| 1 | Pantalla OLED 0,96" **SSD1306 I2C** (128 × 64, **4 pines**) | Muestra las lecturas y el estado en la maqueta | 12.000 – 20.000 |
+| 1 + 1 | Resistencias de **10 kΩ** y **20 kΩ** (o tres de 10 kΩ: una sola y dos en serie) | Divisor de voltaje del sensor de turbidez | 500 |
+| 10 | Cables dupont **hembra-hembra** (6 para los sensores, 4 para la pantalla) | Unir todo al ESP32 | 4.000 |
+| 1 | Recipiente plástico transparente (unos 6 L, ~30 × 20 × 12 cm) | El lago | 15.000 |
+| | **Total** | | **≈ 130.000 – 155.000** |
 
-La alimentación sale del USB del portátil. No hace falta protoboard: el divisor se suelda en el cable (ver abajo).
+Herramientas y consumibles que ya tienes: cautín, estaño, flux, termoencogible (o cinta aislante) y silicona o plastilina epóxica para fijar el sensor de turbidez.
+
+**Al comprar la placa:** pide el **DevKit V1 con ESP32-WROOM-32**, de 30 pines, con el chip USB **CP2102** si lo hay (Windows lo reconoce sin instalar nada); con **CH340** también sirve, pero quizá haya que instalar su controlador. El de 38 pines (19 por lado) también sirve sin cambiar el firmware: solo cambia el orden de los pines. **No sirven sin cambios:** ESP32-CAM, ESP8266 / NodeMCU, ESP32-C3, S2 o S3, ni la **WROOM-32U** si no trae su antena externa.
+
+**Al comprar la pantalla:** pide la versión **I2C de 4 pines** (GND, VCC, SCL, SDA), no la SPI de 7 pines. La LCD 1602 no sirve igual de bien: trabaja a 5 V y sus líneas de datos pueden dañar el ESP32 sin un convertidor de nivel.
+
+La alimentación sale del USB del portátil. No hace falta protoboard: el divisor se suelda en el cable, y el 3V3 y el GND que comparten el sensor TDS y la pantalla se unen con una "Y" soldada (ver abajo).
 
 ## Conexiones
+
+![Diagrama de conexiones: ESP32, sensor de turbidez con su divisor de voltaje y sensor TDS](diagrama-conexiones.svg)
+
+El diagrama también está en [`diagrama-conexiones.svg`](diagrama-conexiones.svg): ábrelo en el navegador para verlo grande o imprimirlo.
 
 | Componente | Pin del componente | Va a |
 |---|---|---|
@@ -55,6 +67,10 @@ La alimentación sale del USB del portátil. No hace falta protoboard: el diviso
 | Sensor TDS | + | **3V3** |
 | | − | GND (el otro pin GND del ESP32) |
 | | A | **GPIO 35** |
+| Pantalla OLED (opcional) | GND | GND (el mismo del TDS, con una "Y" soldada) |
+| | VCC | **3V3** (el mismo del TDS, con una "Y" soldada) |
+| | SCL | **GPIO 22** |
+| | SDA | **GPIO 21** |
 
 **Por qué el divisor:** el sensor de turbidez entrega hasta 4,5 V y los pines del ESP32 aguantan máximo 3,3 V. Las dos resistencias bajan el voltaje a dos tercios.
 
@@ -63,7 +79,7 @@ La alimentación sale del USB del portátil. No hace falta protoboard: el diviso
 - En la punta que va al GPIO 34, suelda un extremo de la de 20 kΩ. El otro extremo va a un cable que llega a GND.
 - Cubre todo con termoencogible. Queda un arnés en "Y" de tres puntas: señal del sensor, GPIO 34 y GND.
 
-El ESP32 tiene dos pines GND en un lado y uno en el otro, así que cada sensor usa el suyo.
+El ESP32 DevKit V1 de 30 pines tiene un GND a cada lado: el sensor de turbidez usa el que está junto a VIN y el TDS el que está junto a 3V3. Si tu placa es de 38 pines, el orden cambia: guíate por el nombre impreso en cada pin.
 
 **Cuidado con el agua:** solo las puntas de las sondas van dentro del agua. La cabeza del sensor de turbidez no es sumergible: fíjala al borde del recipiente con silicona o plastilina epóxica para que solo la parte inferior toque el agua. Separa las dos sondas unos 10 cm. El ESP32 y las placas de los sensores van fuera del recipiente.
 
@@ -72,12 +88,16 @@ El ESP32 tiene dos pines GND en un lado y uno en el otro, así que cada sensor u
 1. Instala [Arduino IDE 2](https://www.arduino.cc/en/software).
 2. En *Archivo → Preferencias → URLs adicionales de gestor de placas*, agrega
    `https://espressif.github.io/arduino-esp32/package_esp32_index.json`.
-   Luego, en *Herramientas → Placa → Gestor de placas*, instala **esp32** de Espressif. No hace falta ninguna otra librería.
+   Luego, en *Herramientas → Placa → Gestor de placas*, instala **esp32** de Espressif.
+   En *Herramientas → Gestionar librerías*, instala **Adafruit SSD1306** (acepta instalar también **Adafruit GFX Library**). Hacen falta para compilar, aunque no conectes la pantalla.
 3. Abre `firmware/maqueta_jaboque/maqueta_jaboque.ino` y cambia:
    - `WIFI_NOMBRE` y `WIFI_CLAVE`: la red WiFi a la que también está conectado el portátil.
    - `SERVIDOR`: la dirección que imprime `npm start` en la línea "ESP32 (misma WiFi)".
-4. Selecciona la placa **ESP32 Dev Module** y el puerto COM, y sube el programa.
-5. Abre el *Monitor serie* a 115200 baudios. Debes ver una línea JSON cada 2 segundos.
+4. Selecciona la placa **ESP32 Dev Module** y pulsa **Verificar** (✓): compila sin necesidad de tener el ESP32 conectado, así detectas cualquier problema antes.
+5. Conecta el ESP32, elige el puerto COM y pulsa **Subir** (→). Si se queda en "Connecting…", mantén presionado el botón **BOOT** de la placa hasta que empiece a subir.
+6. Abre el *Monitor serie* a 115200 baudios. Debes ver "Pantalla OLED encontrada" (o "Sin pantalla OLED", si no la conectaste) y luego una línea JSON cada 2 segundos.
+
+**La pantalla muestra** la turbidez, los sólidos disueltos y una franja de estado: "Agua en buen estado", **"NIVEL CRITICO"** (invertida, exactamente cuando la web marca crítico y sale el Telegram), "Sin WiFi" o "Sin servidor". Si no muestra nada, revisa SDA/SCL; si tu pantalla usa la dirección 0x3D, cámbiala en `DIRECCION_OLED`.
 
 > El ESP32 solo se conecta a redes de **2,4 GHz**. Las redes de las universidades con usuario y contraseña (WPA2-Enterprise) no sirven. Usa la zona WiFi de un celular, y que **tenga datos**: el portátil necesita internet para mandar las alertas a Telegram.
 
