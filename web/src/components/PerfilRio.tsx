@@ -1,5 +1,4 @@
 import type { Estacion } from "@/lib/fuentes";
-import { Revelar } from "./movimiento";
 
 const OD_MINIMO = 4; // mg/L: por debajo, la mayoría de peces no sobrevive
 const OD_MAX = 8;
@@ -13,7 +12,7 @@ function colorAgua(turbidez: number | null) {
 
 export default function PerfilRio({ estaciones }: { estaciones: Estacion[] }) {
   return (
-    <Revelar className="rio" umbral={0.2}>
+    <div className="rio">
       <div className="rio__escala" aria-hidden>
         <span>Oxígeno disuelto (mg/L)</span>
         <span className="rio__regla">
@@ -48,6 +47,6 @@ export default function PerfilRio({ estaciones }: { estaciones: Estacion[] }) {
           );
         })}
       </ol>
-    </Revelar>
+    </div>
   );
 }

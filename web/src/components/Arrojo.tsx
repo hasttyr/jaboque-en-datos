@@ -1,5 +1,4 @@
 import type { PuntoArrojo, Residuos } from "@/lib/fuentes";
-import { Revelar } from "./movimiento";
 
 const fmt = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 0 });
 const JABOQUE = { lon: -74.1356, lat: 4.7132 };
@@ -37,7 +36,7 @@ export function MapaArrojo({ puntos }: { puntos: PuntoArrojo[] }) {
   const engativa = urbanos.filter((p) => p.localidad === "Engativá").length;
 
   return (
-    <Revelar as="figure" className="arrojo__mapa" umbral={0.3}>
+    <figure className="arrojo__mapa">
       <svg viewBox={`0 0 ${W + 40} ${H + 40}`} role="img" aria-label={`Mapa de ${urbanos.length} puntos críticos de arrojo clandestino en Bogotá`}>
         {urbanos.map((p, i) => (
           <path
@@ -55,10 +54,10 @@ export function MapaArrojo({ puntos }: { puntos: PuntoArrojo[] }) {
         </g>
       </svg>
       <figcaption>
-        Cada punto es un lugar donde se tira basura de forma recurrente. En ámbar, los {engativa} de Engativá, la
+        Cada punto es un lugar donde se tira basura de forma recurrente. Resaltados, los {engativa} de Engativá, la
         localidad de Jaboque. Pasa el cursor sobre un punto para ver la dirección.
       </figcaption>
-    </Revelar>
+    </figure>
   );
 }
 
@@ -68,7 +67,7 @@ export function RankingLocalidades({ puntos }: { puntos: PuntoArrojo[] }) {
   const filas = [...conteo.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
   const max = filas[0][1];
   return (
-    <Revelar as="ol" className="ranking">
+    <ol className="ranking">
       {filas.map(([loc, n], i) => (
         <li
           key={loc}
@@ -82,14 +81,14 @@ export function RankingLocalidades({ puntos }: { puntos: PuntoArrojo[] }) {
           <span className="ranking__valor">{n}</span>
         </li>
       ))}
-    </Revelar>
+    </ol>
   );
 }
 
 export function ResiduosMes({ residuos }: { residuos: Residuos }) {
   const max = residuos.porTipo[0]?.toneladas ?? 1;
   return (
-    <Revelar as="ul" className="residuos">
+    <ul className="residuos">
       {residuos.porTipo.map((r, i) => (
         <li
           key={r.tipo}
@@ -103,6 +102,6 @@ export function ResiduosMes({ residuos }: { residuos: Residuos }) {
           <span className="residuos__valor">{fmt.format(r.toneladas)} t</span>
         </li>
       ))}
-    </Revelar>
+    </ul>
   );
 }

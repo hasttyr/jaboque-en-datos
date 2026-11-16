@@ -1,27 +1,27 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Archivo } from "next/font/google";
 import "./globals.css";
-import "./movimiento.css";
 
-const fuente = Inter({
+const fuente = Archivo({
   variable: "--fuente",
   subsets: ["latin"],
-  weight: ["200", "400", "600"],
+  axes: ["wdth"],
 });
 
 export const metadata: Metadata = {
   title: "Jaboque en datos",
   description:
-    "Contaminación y basura en el Humedal Jaboque y el río Bogotá con datos abiertos, más una maqueta con sensores en tiempo real.",
+    "Contaminación y basura en el Humedal Jaboque y el río Bogotá con datos abiertos, más una maqueta con sensores en tiempo real que avisa por Telegram.",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0d3b2e",
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="es" className={fuente.variable} suppressHydrationWarning>
-      <head>
-        {/* Las animaciones de entrada solo ocultan contenido si JavaScript está disponible. */}
-        <script dangerouslySetInnerHTML={{ __html: "document.documentElement.dataset.js='1'" }} />
-      </head>
+    <html lang="es" className={fuente.variable}>
       <body>{children}</body>
     </html>
   );

@@ -1,29 +1,29 @@
 import MapaJaboque from "@/components/MapaJaboque";
 import PerfilRio from "@/components/PerfilRio";
 import MaquetaEnVivo from "@/components/MaquetaEnVivo";
+import Estacion from "@/components/Estacion";
 import { MapaArrojo, RankingLocalidades, ResiduosMes } from "@/components/Arrojo";
+import { Contador } from "@/components/movimiento";
 import { datosArrojo, datosJaboque, datosResiduos, datosRio } from "@/lib/datos";
 import { FUENTES } from "@/lib/fuentes";
-import { Contador, Revelar, Superficie } from "@/components/movimiento";
-import CampoParticulas from "@/components/CampoParticulas";
 
 const IMPACTOS = [
   {
     titulo: "Vecinos que vigilan su propio humedal",
     texto:
-      "Con unos 220.000 pesos en piezas, un colegio o una junta de acción comunal puede instalar sensores y publicar lecturas cada pocos segundos, en lugar de esperar un informe anual.",
+      "Con unos 110.000 pesos en piezas, un colegio o una junta de acción comunal puede medir el agua cada pocos segundos y recibir alertas en el celular, en lugar de esperar un informe anual.",
     quien: "Comunidades, colegios y juntas de acción comunal",
   },
   {
     titulo: "Alertas antes de que el daño sea irreversible",
     texto:
-      "Un salto brusco en la turbidez o en los sólidos disueltos suele delatar un vertimiento. Detectarlo en minutos permite avisar a la autoridad ambiental mientras todavía se puede encontrar el origen.",
+      "Un salto brusco en la turbidez o en los sólidos disueltos suele delatar un vertimiento. Saberlo en minutos permite avisar a la autoridad ambiental mientras todavía se puede encontrar el origen.",
     quien: "Autoridades ambientales y empresas de acueducto",
   },
   {
     titulo: "Recolección donde de verdad cae la basura",
     texto:
-      "Cruzar los puntos críticos de arrojo con el peso de la basura que llega al agua ayuda a decidir qué rutas reforzar y dónde poner contenedores.",
+      "Cruzar los puntos críticos de arrojo con la calidad del agua medida cerca de ellos ayuda a decidir qué rutas reforzar y dónde poner contenedores.",
     quien: "Operadores de aseo y alcaldías locales",
   },
   {
@@ -35,7 +35,7 @@ const IMPACTOS = [
   {
     titulo: "Educación ambiental que se ve",
     texto:
-      "Ver cómo se enturbia el agua cuando alguien tira un objeto convence más que una cifra en un informe. La maqueta funciona igual en un aula, una feria de ciencia o un museo.",
+      "Ver cómo se enturbia el agua y llega la alerta al celular convence más que una cifra en un informe. La maqueta funciona igual en un aula, una feria de ciencia o un museo.",
     quien: "Docentes, museos y ferias de ciencia",
   },
 ];
@@ -48,6 +48,12 @@ const mes = (yyyymm: string) =>
     new Date(`${yyyymm}-15T00:00:00Z`),
   );
 
+const Icono = ({ d }: { d: string }) => (
+  <svg viewBox="0 0 24 24" aria-hidden>
+    <path d={d} />
+  </svg>
+);
+
 export default async function Inicio() {
   const [rio, arrojo, residuos] = await Promise.all([datosRio(), datosArrojo(), datosResiduos()]);
 
@@ -59,147 +65,138 @@ export default async function Inicio() {
 
   return (
     <main>
-      <CampoParticulas />
-      <header className="cabecera">
-        <a href="#" className="cabecera__marca">
-          <svg viewBox="0 0 20 20" aria-hidden>
-            <defs>
-              <linearGradient id="marca" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stopColor="#8052ff" />
-                <stop offset="1" stopColor="#15846e" />
-              </linearGradient>
-            </defs>
-            <path d="M10 2 18 17H2Z" fill="url(#marca)" />
-          </svg>
-          Jaboque en datos
-        </a>
-        <nav aria-label="Secciones">
-          <a href="#rio">Río Bogotá</a>
-          <a href="#basura">Basura</a>
-          <a href="#impacto">Impacto</a>
-          <a href="#fuentes">Fuentes</a>
-          <a href="#maqueta" className="boton-primario">Maqueta en vivo</a>
-        </nav>
-      </header>
-
-      <section className="seccion seccion--portada" aria-labelledby="titulo-portada">
-        <MapaJaboque datos={datosJaboque} />
-      </section>
-
-      <section id="rio" className="seccion" aria-labelledby="titulo-rio">
-        <div className="seccion__encabezado">
-          <h2 id="titulo-rio">El agua de Jaboque termina en un río que ya no respira</h2>
-          <p>
-            <span className="seccion__fuente">IDEAM, datos.gov.co</span>
-            Jaboque desagua en el río Bogotá. El IDEAM mide el oxígeno disuelto a lo largo de su recorrido. Nace en
-            Villapinzón con {nacimiento.oxigeno} mg/L y, después de atravesar la ciudad, llega a {peor.oxigeno} mg/L
-            en {peor.nombre.split(" · ")[0]}. Sin oxígeno no hay peces, ni insectos acuáticos, ni aves que se
-            alimenten de ellos.
-          </p>
-        </div>
-        <PerfilRio estaciones={rio.datos} />
-        <p className="nota">
-          Promedio de las mediciones del IDEAM desde 2015, ordenadas de nacimiento a desembocadura. El color de cada
-          punto representa la turbidez: azul es agua clara, café es agua cargada de sedimentos.
-        </p>
-      </section>
-
-      <section id="basura" className="seccion" aria-labelledby="titulo-basura">
-        <div className="seccion__encabezado">
-          <h2 id="titulo-basura">
-            <Contador valor={clandestino} duracion={2200} className="cifra-viva" /> toneladas de basura tirada en la calle en un solo mes
-          </h2>
-          <p>
-            <span className="seccion__fuente">UAESP, datosabiertos.bogota.gov.co</span>
-            En {mes(residuos.datos.mes)}, Bogotá recogió {fmt.format(residuos.datos.total)} toneladas de residuos. El{" "}
-            {pctClandestino}% vino de arrojo clandestino: escombros, colchones y bolsas dejados en aceras, canales y
-            orillas de los humedales. Lo que no se recoge, la lluvia lo arrastra al agua.
-          </p>
-        </div>
-        <div className="basura">
-          <MapaArrojo puntos={arrojo.datos} />
-          <div className="basura__datos">
-            <h3>Puntos críticos por localidad</h3>
-            <RankingLocalidades puntos={arrojo.datos} />
-            <h3>Residuos recogidos en {mes(residuos.datos.mes)}</h3>
-            <ResiduosMes residuos={residuos.datos} />
-          </div>
-        </div>
-      </section>
-
-      <section id="maqueta" className="seccion seccion--maqueta" aria-labelledby="titulo-maqueta">
-        <Superficie />
-        <div className="seccion__encabezado">
-          <h2 id="titulo-maqueta">Jaboque a escala</h2>
-          <p>
-            <span className="seccion__fuente">Sensores en tiempo real</span>
-            Construimos un modelo del humedal con sensores que miden lo mismo que el IDEAM en el río: qué tan turbia
-            está el agua, cuántos sólidos lleva disueltos y su temperatura. Una barrera flotante atrapa la basura
-            que cae al lago y una balanza la pesa. Cada dos segundos la maqueta envía una lectura a esta página.
-          </p>
-        </div>
-        <MaquetaEnVivo />
-        <ol className="flujo" aria-label="Cómo viajan los datos">
-          <li>
-            <strong>Sensores</strong>Turbidez, sólidos disueltos, temperatura, peso y un contador de objetos.
-          </li>
-          <li>
-            <strong>ESP32</strong>Lee los sensores y envía las lecturas por WiFi.
-          </li>
-          <li>
-            <strong>Servidor local</strong>Un portátil recibe las lecturas y las retransmite al instante.
-          </li>
-          <li>
-            <strong>Esta página</strong>Muestra el estado del lago mientras ocurre.
-          </li>
-        </ol>
-      </section>
-
-      <section id="impacto" className="seccion seccion--impacto" aria-labelledby="titulo-impacto">
-        <div className="seccion__encabezado">
-          <h2 id="titulo-impacto">Un humedal que se mide se puede defender</h2>
-          <p>
-            <span className="seccion__fuente">Ciencia, tecnología y sociedad</span>
-            La maqueta es una prueba de concepto. Lo que demuestra es que vigilar un humedal ya no exige un
-            laboratorio: con datos abiertos y sensores de bajo costo, cualquier persona puede ver lo que le pasa al
-            agua y actuar a tiempo.
-          </p>
-        </div>
-        <Revelar as="ul" className="impactos" umbral={0.15}>
-          {IMPACTOS.map((impacto, i) => (
-            <li key={impacto.titulo} style={{ "--i": i } as React.CSSProperties}>
-              <h3>{impacto.titulo}</h3>
-              <div>
-                <p>{impacto.texto}</p>
-                <p className="impactos__quien">{impacto.quien}</p>
+      <Estacion
+        pantallas={[
+          {
+            id: "jaboque",
+            nombre: "Jaboque",
+            icono: <Icono d="M3 15c3-2 6-2 9 0s6 2 9 0M3 19c3-2 6-2 9 0s6 2 9 0M7 12V4M12 11V2M17 12V6" />,
+            contenido: <MapaJaboque datos={datosJaboque} />,
+          },
+          {
+            id: "rio",
+            nombre: "Río Bogotá",
+            corto: "Río",
+            icono: <Icono d="M4 3c6 4-4 8 2 12s-2 6 2 6M14 3c6 4-4 8 2 12s-2 6 2 6" />,
+            contenido: (
+              <div className="rio-pantalla">
+                <div className="encabezado">
+                  <h2>El agua de Jaboque termina en un río que ya no respira</h2>
+                  <p>
+                    Jaboque desagua en el río Bogotá. El IDEAM mide su oxígeno disuelto de punta a punta: nace en
+                    Villapinzón con {nacimiento.oxigeno} mg/L y, después de atravesar la ciudad, llega a{" "}
+                    {peor.oxigeno} mg/L en {peor.nombre.split(" · ")[0]}. Sin oxígeno no hay peces, ni insectos
+                    acuáticos, ni aves que se alimenten de ellos.
+                  </p>
+                  <p className="nota">
+                    Promedio de las mediciones del IDEAM desde 2015 (datos.gov.co), de nacimiento a desembocadura. El
+                    color de cada punto es la turbidez: azul es agua clara, café es agua cargada de sedimentos.
+                  </p>
+                </div>
+                <PerfilRio estaciones={rio.datos} />
               </div>
-            </li>
-          ))}
-        </Revelar>
-        <p className="cierre">
-          Jaboque no se llenó de cemento ni de basura por accidente. Fueron decisiones de urbanización, de recolección
-          y de cada persona que tira algo en la orilla. Ver el daño mientras ocurre hace más difícil ignorarlo.
-        </p>
-      </section>
-
-      <footer id="fuentes" className="pie">
-        <h2>Fuentes</h2>
-        <ul>
-          {Object.values(FUENTES).map((f) => (
-            <li key={f.url}>
-              <a href={f.url} target="_blank" rel="noreferrer">
-                {f.nombre}
-              </a>
-              <span>{f.portal}</span>
-            </li>
-          ))}
-        </ul>
-        <p className="nota">
-          Datos consultados el {fecha(rio.consultado)}.
-          {respaldo && " Algún portal no respondió en la última consulta, así que parte de los datos viene de la copia guardada más reciente."}{" "}
-          Proyecto final del curso Contexto: Ciencia, Tecnología y Sociedad.
-        </p>
-      </footer>
+            ),
+          },
+          {
+            id: "basura",
+            nombre: "Basura",
+            icono: <Icono d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" />,
+            contenido: (
+              <div className="basura">
+                <div className="basura__texto">
+                  <h2>
+                    <Contador valor={clandestino} className="cifra" />
+                    <span>toneladas de basura tirada en la calle en un solo mes</span>
+                  </h2>
+                  <p>
+                    En {mes(residuos.datos.mes)}, Bogotá recogió {fmt.format(residuos.datos.total)} toneladas de
+                    residuos. El {pctClandestino} % vino de arrojo clandestino: escombros, colchones y bolsas dejados en
+                    aceras, canales y orillas de los humedales. Lo que no se recoge, la lluvia lo arrastra al agua.
+                  </p>
+                  <ResiduosMes residuos={residuos.datos} />
+                  <p className="nota">UAESP, datosabiertos.bogota.gov.co</p>
+                </div>
+                <MapaArrojo puntos={arrojo.datos} />
+                <div className="basura__ranking">
+                  <h3>Puntos críticos de arrojo por localidad</h3>
+                  <RankingLocalidades puntos={arrojo.datos} />
+                </div>
+              </div>
+            ),
+          },
+          {
+            id: "maqueta",
+            nombre: "Maqueta en vivo",
+            corto: "Maqueta",
+            icono: <Icono d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z" />,
+            contenido: <MaquetaEnVivo />,
+          },
+          {
+            id: "impacto",
+            nombre: "Impacto",
+            icono: <Icono d="M12 21s-7-4.5-7-11a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 6.5-7 11-7 11z" />,
+            contenido: (
+              <div className="impacto">
+                <div className="encabezado">
+                  <h2>Un humedal que se mide se puede defender</h2>
+                  <p>
+                    La maqueta es una prueba de concepto. Demuestra que vigilar un humedal ya no exige un laboratorio:
+                    con datos abiertos y sensores de bajo costo, cualquier persona puede ver lo que le pasa al agua y
+                    actuar a tiempo.
+                  </p>
+                </div>
+                <ul className="impactos">
+                  {IMPACTOS.map((i) => (
+                    <li key={i.titulo}>
+                      <h3>{i.titulo}</h3>
+                      <p>{i.texto}</p>
+                      <p className="impactos__quien">{i.quien}</p>
+                    </li>
+                  ))}
+                  <li className="impactos__cierre">
+                    <p>
+                      Jaboque no se llenó de cemento ni de basura por accidente. Fueron decisiones de urbanización, de
+                      recolección y de cada persona que tira algo en la orilla. Ver el daño mientras ocurre hace más
+                      difícil ignorarlo.
+                    </p>
+                    <a href="#fuentes" className="solo-movil">
+                      Ver las fuentes de los datos
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            ),
+          },
+          {
+            id: "fuentes",
+            nombre: "Fuentes",
+            icono: <Icono d="M5 4h10l4 4v12H5zM15 4v4h4M8 12h8M8 16h8" />,
+            soloEscritorio: true,
+            contenido: (
+              <div className="fuentes">
+                <h2>De dónde salen los datos</h2>
+                <ul>
+                  {Object.values(FUENTES).map((f) => (
+                    <li key={f.url}>
+                      <a href={f.url} target="_blank" rel="noreferrer">
+                        {f.nombre}
+                      </a>
+                      <span>{f.portal}</span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="nota">
+                  Datos consultados el {fecha(rio.consultado)}.
+                  {respaldo &&
+                    " Algún portal no respondió en la última consulta, así que parte de los datos viene de la copia guardada más reciente."}{" "}
+                  Las lecturas de la maqueta vienen de sus propios sensores. Proyecto final del curso Contexto: Ciencia,
+                  Tecnología y Sociedad.
+                </p>
+              </div>
+            ),
+          },
+        ]}
+      />
     </main>
   );
 }

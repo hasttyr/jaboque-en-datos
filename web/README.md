@@ -1,36 +1,23 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Web: Jaboque en datos
 
-## Getting Started
-
-First, run the development server:
+Una sola página (SPA) con seis pantallas independientes. Cada pantalla tiene su enlace (`#jaboque`, `#rio`, `#basura`, `#maqueta`, `#impacto`, `#fuentes`), se cambia con las pestañas, con las flechas del paginador o con las teclas ← y →.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev     # http://localhost:3000
+npm run datos   # actualiza las copias de respaldo de los datos abiertos
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Dónde está cada cosa
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Archivo | Qué hace |
+|---|---|
+| `src/app/page.tsx` | Consulta los datos abiertos y arma las seis pantallas |
+| `src/components/Estacion.tsx` | Pestañas, navegación por hash y teclado, transición entre pantallas y aviso de nivel crítico |
+| `src/components/ConexionMaqueta.tsx` | Conexión con el servidor de la maqueta (o modo demostración), compartida por todas las pantallas |
+| `src/components/MaquetaEnVivo.tsx` | Pantalla de la maqueta: lecturas, estado de alerta y botones de demostración |
+| `src/components/MapaJaboque.tsx` + `3d/` | Portada: el humedal de 1952 a 2014, en 3D si hay WebGL |
+| `src/lib/maqueta.ts` | Límites, regla de alerta y simulador (copia de los de `iot-server/`) |
+| `src/lib/fuentes.ts`, `src/lib/datos.ts` | Conectores a los portales de datos abiertos, con copias de respaldo en `src/data/` |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+El sistema visual está en `DESIGN.md`.

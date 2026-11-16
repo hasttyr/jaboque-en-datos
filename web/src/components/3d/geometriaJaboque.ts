@@ -18,7 +18,7 @@ export const COLORES: Record<string, string> = {
   "Vegetación Acuática": "#17b890",
   "Vegetación Herbácea": "#9bd36a",
   Arbustales: "#2e8f5e",
-  Pastos: "#3a3f2f",
+  Pastos: "#6b7a4a",
   "Areas Endurecidas": "#f2f2ee",
 };
 

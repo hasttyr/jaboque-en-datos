@@ -216,6 +216,8 @@ function Escena({ datos, estado }: { datos: DatosJaboque; estado: React.RefObjec
     [geometrias, materiales, onda],
   );
 
+  // Patrón normal de React Three Fiber: los uniforms y la cámara se actualizan en cada cuadro, fuera de React.
+  // eslint-disable-next-line react-hooks/immutability
   useFrame((state, delta) => {
     const e = estado.current;
     const t = state.clock.elapsedTime;
@@ -238,6 +240,7 @@ function Escena({ datos, estado }: { datos: DatosJaboque; estado: React.RefObjec
 
     // El plano de la onda está centrado en la ciudad y girado: su eje v apunta a -z.
     onda.uniforms.uCentro.value.set(-origen.x, origen.y);
+    // eslint-disable-next-line react-hooks/immutability
     onda.uniforms.uRadio.value = radio;
     onda.uniforms.uBrillo.value = enTransicion ? Math.max(0.25, e.brillo) : 0;
     onda.uniforms.uTiempo.value = t;
@@ -246,7 +249,7 @@ function Escena({ datos, estado }: { datos: DatosJaboque; estado: React.RefObjec
     const ancho = size.width >= 960;
     const az = (ancho ? -0.6 : -0.3) + e.progreso * (ancho ? 0.75 : 0.4) + Math.sin(t * 0.15) * 0.05 + puntero.current.x * 0.1;
     const polar = (ancho ? 0.68 : 0.5) - e.brillo * 0.1 + puntero.current.y * 0.05;
-    const dist = (ancho ? 21 : 34) - e.brillo * 1.5;
+    const dist = (ancho ? 21 : 23) - e.brillo * 1.5;
     objetivo.set(Math.sin(az) * Math.sin(polar) * dist, Math.cos(polar) * dist, Math.cos(az) * Math.sin(polar) * dist);
     const k = 1 - Math.exp(-delta * 3.2);
     camera.position.lerp(objetivo, k);
@@ -271,7 +274,7 @@ function Escena({ datos, estado }: { datos: DatosJaboque; estado: React.RefObjec
           <planeGeometry args={[4000, 4000]} />
         </mesh>
       </group>
-      <gridHelper args={[40, 40, "#3a2a7a", "#1a1438"]} position={[0, -0.02, 0]} />
+      <gridHelper args={[40, 40, "#2c6b54", "#174a3a"]} position={[0, -0.02, 0]} />
     </>
   );
 }
