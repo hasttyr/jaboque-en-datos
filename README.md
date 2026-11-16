@@ -10,28 +10,26 @@ Proyecto final del curso *Contexto: Ciencia, Tecnología y Sociedad*. Muestra la
 | `iot-server/` | Recibe las lecturas del ESP32, las retransmite a la página y manda las alertas a Telegram | El portátil, en la red local |
 | `maqueta/` | Guía de construcción, materiales, conexiones y firmware del ESP32 | Arduino IDE |
 
-## Probar todo en el portátil
+## Levantar todo con un comando
+
+Desde la carpeta raíz del proyecto:
 
 ```bash
-# 1. Servidor de la maqueta con lecturas simuladas (no necesita instalar nada)
-cd iot-server
-npm run demo
-
-# 2. En otra terminal, la web
-cd web
-npm install
-npm run dev        # abre http://localhost:3000
+npm run demo    # servidor con lecturas simuladas + web (sin maqueta)
+npm start       # servidor esperando al ESP32 + web (con la maqueta real)
 ```
 
-La pantalla "Maqueta en vivo" debe decir *Servidor conectado con lecturas simuladas*. Si apagas el servidor, la web pasa sola al modo demostración.
+Arranca el servidor de la maqueta (puerto 4000) y la web (http://localhost:3000), y abre el navegador en la pantalla "Maqueta en vivo". La primera vez instala las dependencias de la web. **Ctrl+C apaga todo.** Si uno de los dos se cae, el otro también se apaga, para que no quede nada a medias.
+
+En modo demo, la pantalla "Maqueta en vivo" debe decir *Servidor conectado con lecturas simuladas*. Si apagas el servidor, la web pasa sola al modo demostración del navegador.
 
 ## Con la maqueta real
 
-1. `cd iot-server && npm start`. Anota la IP que aparece en la línea "ESP32 (misma WiFi)".
+1. `npm start`. Anota la IP que aparece en la línea "ESP32 (misma WiFi)".
 2. Pon esa IP en el firmware (`maqueta/firmware/maqueta_jaboque/maqueta_jaboque.ino`) y súbelo al ESP32.
-3. Abre la web pública (o la local) en ese mismo portátil.
+3. Conecta el ESP32: empieza a enviar lecturas solo, y la web dice *Maqueta conectada*.
 
-Para las alertas de Telegram, sigue los pasos de `maqueta/README.md` → *Configurar las alertas de Telegram*.
+Para las alertas de Telegram, sigue los pasos de `maqueta/README.md` → *Configurar las alertas de Telegram*. El asistente también corre desde la raíz con `npm run telegram`.
 
 Formato que envía el ESP32 a `POST /lecturas` (todos los campos son opcionales, pero debe venir al menos uno):
 

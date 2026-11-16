@@ -1,0 +1,14 @@
+{
+  "name": "jaboque-en-datos",
+  "private": true,
+  "type": "module",
+  "description": "Levanta el servidor de la maqueta y la web con un solo comando",
+  "scripts": {
+    "start": "node iniciar.mjs",
+    "demo": "node iniciar.mjs --simular",
+    "telegram": "npm --prefix iot-server run telegram"
+  },
+  "engines": {
+    "node": ">=20.12"
+  }
+}
