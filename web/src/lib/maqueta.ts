@@ -37,18 +37,18 @@ export function crearSimulador() {
 
   return {
     tierra() {
-      turbidez += 45 + Math.random() * 40;
+      turbidez += 70 + Math.random() * 40;
     },
     sal() {
-      tds += 160 + Math.random() * 80;
+      tds += 480 + Math.random() * 120;
     },
     limpiar() {
       turbidez = 6;
       tds = 90;
     },
     siguiente(automatico = true) {
-      if (automatico && Math.random() < 0.05) this.tierra();
-      if (automatico && Math.random() < 0.015) this.sal();
+      // Solo, el agua se mueve un poco sin pasar el límite; la tierra y la sal las echa alguien.
+      if (automatico && Math.random() < 0.06 && turbidez < 20) turbidez += 6 + Math.random() * 10;
       turbidez = Math.max(4, 4 + (turbidez - 4) * 0.97 + (Math.random() - 0.5));
       tds = 90 + (tds - 90) * 0.993 + (Math.random() - 0.5) * 2;
       return redondear();

@@ -15,7 +15,7 @@ Proyecto final del curso *Contexto: Ciencia, Tecnología y Sociedad*. Muestra la
 Desde la carpeta raíz del proyecto:
 
 ```bash
-npm run demo    # servidor con lecturas simuladas + web (sin maqueta)
+npm run demo    # servidor con lecturas simuladas + web (sin maqueta); las alertas se disparan con los botones
 npm start       # servidor esperando al ESP32 + web (con la maqueta real)
 ```
 

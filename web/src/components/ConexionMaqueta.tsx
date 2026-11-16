@@ -56,8 +56,13 @@ type Maqueta = {
   ultima?: Lectura;
   alerta: EstadoAlerta;
   simulado: boolean;
-  demo: { tierra: () => void; sal: () => void; limpiar: () => void };
+  telegram: boolean; // el servidor del portátil manda las alertas a Telegram
+  // Echar tierra o sal: al servidor si está simulando, al simulador del navegador en modo demostración.
+  // null cuando hay una maqueta real conectada.
+  demo: { tierra: () => void; sal: () => void; limpiar: () => void } | null;
 };
+
+type AccionDemo = "tierra" | "sal" | "limpiar";
 
 const Contexto = createContext<Maqueta | null>(null);
 
@@ -71,6 +76,7 @@ export default function ConexionMaqueta({ children }: { children: React.ReactNod
   const servidor = useSyncExternalStore(suscribirServidor, leerServidor, () => SERVIDOR_POR_DEFECTO);
   const [modo, setModo] = useState<Modo>("conectando");
   const [intento, setIntento] = useState(0);
+  const [config, setConfig] = useState({ simulando: false, telegram: false });
   const [estado, despachar] = useReducer(reducir, { lecturas: [], alerta: SIN_ALERTA });
   const sim = useRef<ReturnType<typeof crearSimulador>>(null);
   sim.current ??= crearSimulador();
@@ -93,6 +99,7 @@ export default function ConexionMaqueta({ children }: { children: React.ReactNod
         return "demo";
       });
     };
+    es.addEventListener("config", (ev) => setConfig(JSON.parse((ev as MessageEvent).data)));
     es.addEventListener("historial", (ev) => {
       abierta = true;
       setModo("conectado");
@@ -129,11 +136,17 @@ export default function ConexionMaqueta({ children }: { children: React.ReactNod
     };
   }, [modo]);
 
-  const accion = useCallback((f: (s: ReturnType<typeof crearSimulador>) => void) => {
+  const enNavegador = useCallback((a: AccionDemo) => {
     const s = sim.current!;
-    f(s);
+    s[a]();
     despachar({ tipo: "lectura", lectura: { ts: new Date().toISOString(), origen: "demo", ...s.siguiente(false) } });
   }, []);
+
+  // La lectura nueva llega por el stream, como cualquier otra.
+  const enServidor = useCallback(
+    (a: AccionDemo) => void fetch(`${servidor.replace(/\/$/, "")}/simular/${a}`, { method: "POST" }).catch(() => {}),
+    [servidor],
+  );
 
   const cambiarServidor = useCallback((url: string) => {
     setModo("conectando");
@@ -142,6 +155,8 @@ export default function ConexionMaqueta({ children }: { children: React.ReactNod
   }, []);
 
   const ultima = estado.lecturas.at(-1);
+
+  const destino = modo === "demo" ? "navegador" : modo === "conectado" && config.simulando ? "servidor" : null;
   const valor = useMemo<Maqueta>(
     () => ({
       modo,
@@ -150,14 +165,15 @@ export default function ConexionMaqueta({ children }: { children: React.ReactNod
       lecturas: estado.lecturas,
       ultima,
       alerta: estado.alerta,
-      simulado: modo === "demo" || ultima?.origen === "simulador",
-      demo: {
-        tierra: () => accion((s) => s.tierra()),
-        sal: () => accion((s) => s.sal()),
-        limpiar: () => accion((s) => s.limpiar()),
+      simulado: modo === "demo" || (modo === "conectado" && config.simulando) || ultima?.origen === "simulador",
+      telegram: modo === "conectado" && config.telegram,
+      demo: destino && {
+        tierra: () => (destino === "navegador" ? enNavegador : enServidor)("tierra"),
+        sal: () => (destino === "navegador" ? enNavegador : enServidor)("sal"),
+        limpiar: () => (destino === "navegador" ? enNavegador : enServidor)("limpiar"),
       },
     }),
-    [modo, servidor, cambiarServidor, estado, ultima, accion],
+    [modo, servidor, cambiarServidor, estado, ultima, config, destino, enNavegador, enServidor],
   );
 
   return <Contexto.Provider value={valor}>{children}</Contexto.Provider>;

@@ -54,6 +54,21 @@ function Medida({
   );
 }
 
+// Qué decir sobre Telegram, sin prometer un mensaje que no salió.
+function mensajeEstado(critico: boolean, modo: string, telegram: boolean, simulado: boolean) {
+  if (modo === "demo")
+    return critico
+      ? "Con la maqueta conectada, aquí saldría la alerta a Telegram. Esta demostración corre solo en el navegador y no envía mensajes."
+      : "Echa tierra o sal para ver qué pasa. Con la maqueta conectada, al pasar un límite durante 6 segundos llega una alerta por Telegram.";
+  if (!telegram)
+    return critico
+      ? "El servidor no tiene Telegram configurado, así que esta alerta no salió. Configúralo con npm run telegram."
+      : "Si la turbidez o los sólidos disueltos pasan su límite durante 6 segundos, el lago entra en nivel crítico.";
+  return critico
+    ? `La alerta${simulado ? ", marcada como simulación," : ""} salió hacia el grupo de Telegram. Se repite cada 10 minutos mientras el lago siga así.`
+    : "Si la turbidez o los sólidos disueltos pasan su límite durante 6 segundos, llega una alerta a los celulares por Telegram.";
+}
+
 export default function MaquetaEnVivo() {
   const m = useMaqueta();
   const [borrador, setBorrador] = useState<string | null>(null);
@@ -95,11 +110,7 @@ export default function MaquetaEnVivo() {
 
       <div className="maqueta__estado" aria-live="polite">
         <h2>{critico ? "Nivel crítico" : m.ultima ? "Agua en buen estado" : "Esperando lecturas"}</h2>
-        <p>
-          {critico
-            ? `La alerta ${m.simulado ? "simulada " : ""}ya salió hacia el grupo de Telegram. Se repite cada 10 minutos mientras el lago siga así.`
-            : "Si la turbidez o los sólidos disueltos pasan su límite durante 6 segundos, llega una alerta a los celulares por Telegram."}
-        </p>
+        <p>{mensajeEstado(critico, m.modo, m.telegram, m.simulado)}</p>
       </div>
 
       <div className="maqueta__medidas">
@@ -119,7 +130,7 @@ export default function MaquetaEnVivo() {
         />
       </div>
 
-      {m.modo === "demo" && (
+      {m.demo && (
         <div className="maqueta__acciones" role="group" aria-label="Probar la maqueta simulada">
           <button type="button" onClick={m.demo.tierra}>
             Echar tierra

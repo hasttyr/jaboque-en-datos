@@ -91,7 +91,9 @@ El ESP32 tiene dos pines GND en un lado y uno en el otro, así que cada sensor u
 
 Los límites y cada cuánto se repite el aviso se cambian en el mismo `.env`. El archivo `.env` no se sube a GitHub porque el token es secreto.
 
-Para probar sin la maqueta, corre `npm run demo`: las lecturas simuladas se enturbian solas y en uno o dos minutos llega una alerta marcada "(simulación)".
+Para probar sin la maqueta, corre `npm run demo` desde la raíz del proyecto. Solas, las lecturas simuladas se mueven un poco pero nunca pasan el límite, así que no le escriben al grupo sin que nadie lo pida. En la pantalla "Maqueta en vivo", pulsa **Echar tierra** o **Echar sal**: a los 6 segundos llega la alerta marcada "(simulación)". **Cambiar el agua** limpia el lago y llega el "✅ volvió a la normalidad".
+
+> La página pública (Vercel) corre una demostración solo en el navegador: muestra el nivel crítico pero **no** manda mensajes a Telegram. Las alertas siempre salen del servidor del portátil, con `npm run demo` o con la maqueta real.
 
 ## Calibración (10 minutos)
 
@@ -108,4 +110,4 @@ Para probar sin la maqueta, corre `npm run demo`: las lecturas simuladas se entu
       Chrome puede pedir permiso para "acceder a dispositivos de la red local": acéptalo.
 - [ ] Los celulares que van a recibir la alerta están en el grupo y tienen las notificaciones activas.
 - [ ] Si algo falla, la web pasa sola al modo demostración y sigue funcionando.
-      `npm run demo` también manda alertas de Telegram con lecturas simuladas.
+      `npm run demo` también manda alertas a Telegram: se disparan con los botones Echar tierra y Echar sal.

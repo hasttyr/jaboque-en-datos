@@ -1,7 +1,8 @@
 // Servidor IoT local de la maqueta del Humedal Jaboque.
 //
 //   node server.mjs             → espera lecturas reales del ESP32
-//   node server.mjs --simular   → además genera lecturas simuladas cada 2 s
+//   node server.mjs --simular   → además genera lecturas simuladas cada 2 s.
+//                                 La web puede echar tierra o sal: POST /simular/tierra | sal | limpiar
 //
 // El ESP32 envía:   POST http://<ip-del-portátil>:4000/lecturas
 //                   {"turbidez_ntu":12.4,"tds_ppm":90}
@@ -27,6 +28,7 @@ const CAMPOS = {
   tds_ppm: [0, 5000],
 };
 
+const sim = process.argv.includes("--simular") ? crearSimulador() : null;
 const historial = [];
 const clientes = new Set();
 
@@ -99,6 +101,8 @@ const servidor = http.createServer((req, res) => {
       "Cache-Control": "no-cache",
       Connection: "keep-alive",
     });
+    // Qué puede hacer este servidor: la web lo usa para mostrar los botones y decir si salió la alerta.
+    res.write(`event: config\ndata: ${JSON.stringify({ simulando: Boolean(sim), telegram: alertas.activa })}\n\n`);
     res.write(`event: historial\ndata: ${JSON.stringify(historial.slice(-60))}\n\n`);
     clientes.add(res);
     const latido = setInterval(() => res.write(": latido\n\n"), 15000);
@@ -124,6 +128,15 @@ const servidor = http.createServer((req, res) => {
     });
   }
 
+  // Solo en modo simulación: los botones de la web echan tierra o sal al lago simulado.
+  const accion = url.pathname.match(/^\/simular\/(tierra|sal|limpiar)$/)?.[1];
+  if (req.method === "POST" && accion) {
+    if (!sim) return json(res, 409, { ok: false, error: "El servidor no está simulando. Usa npm run demo" });
+    sim[accion]();
+    registrar({ ts: new Date().toISOString(), origen: "simulador", ...sim.siguiente(false) });
+    return json(res, 201, { ok: true });
+  }
+
   json(res, 404, { ok: false, error: "Ruta no encontrada. Usa POST /lecturas o GET /stream" });
 });
 
@@ -142,9 +155,8 @@ servidor.listen(PUERTO, "0.0.0.0", () => {
       : "  · Alertas por Telegram apagadas: configura iot-server/.env (npm run telegram)",
   );
 
-  if (process.argv.includes("--simular")) {
+  if (sim) {
     console.log("  · Modo simulación activo: una lectura cada 2 segundos\n");
-    const sim = crearSimulador();
     setInterval(() => registrar({ ts: new Date().toISOString(), origen: "simulador", ...sim.siguiente() }), 2000);
   } else {
     console.log("  · Esperando lecturas del ESP32…\n");
