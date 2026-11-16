@@ -68,11 +68,32 @@ console.log(`\nJaboque en datos: ${simular ? "modo demostración (lecturas simul
 correr("servidor", "iot-server/", simular ? "npm run demo" : "npm start");
 const web = correr("web", "web/", "npm run dev");
 
-let abierto = false;
-web.stdout.on("data", (d) => {
-  if (!abierto && /Ready in/.test(d.toString())) {
-    abierto = true;
-    console.log(`\n  Web lista: ${URL_WEB}/#maqueta\n`);
-    if (!process.argv.includes("--sin-navegador")) abrirNavegador(`${URL_WEB}/#maqueta`);
+// Next dice "Ready" antes de revisar si ya hay otro servidor de la web corriendo,
+// así que se espera un momento antes de anunciarla y abrir el navegador.
+let listo;
+let conflicto = false;
+function vigilarWeb(d) {
+  const texto = d.toString().replace(/\x1b\[[0-9;?]*[A-Za-z]/g, ""); // sin códigos de color
+  if (!listo && !conflicto && /Ready in/.test(texto)) {
+    listo = setTimeout(() => {
+      console.log(`\n  Web lista: ${URL_WEB}/#maqueta\n`);
+      if (!process.argv.includes("--sin-navegador")) abrirNavegador(`${URL_WEB}/#maqueta`);
+    }, 2500);
   }
-});
+  if (/Another next dev server is already running/.test(texto)) {
+    conflicto = true;
+    clearTimeout(listo);
+  }
+  const pid = conflicto && texto.match(/PID:\s+(\d+)/)?.[1];
+  if (pid) {
+    const cerrar = process.platform === "win32" ? `taskkill /PID ${pid} /T /F` : `kill ${pid}`;
+    console.log(`
+  ✗ Ya hay otra copia de la web corriendo (proceso ${pid}), quizá de una terminal que quedó abierta.
+    Ciérrala con:  ${cerrar}
+    y vuelve a correr este comando.
+`);
+  }
+}
+// Next escribe unos avisos por la salida normal y otros por la de errores.
+web.stdout.on("data", vigilarWeb);
+web.stderr.on("data", vigilarWeb);
