@@ -5,3 +5,4 @@ node_modules/
 iot-server/lecturas.jsonl
 *.log
 web/.impeccable/
+iot-server/.env

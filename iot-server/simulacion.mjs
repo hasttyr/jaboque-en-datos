@@ -1,34 +1,27 @@
-// Modelo simple del lago a escala: cada cierto tiempo "alguien" arroja un objeto.
-// Cada objeto suma peso, enturbia el agua y aumenta los sólidos disueltos;
-// con el tiempo la turbidez baja (sedimentación) pero los sólidos disueltos no.
-// La web usa una copia de esta misma lógica para su modo demo.
+// Modelo simple del lago a escala. De vez en cuando "alguien" echa tierra (sube la turbidez)
+// o sal (sube los sólidos disueltos). La tierra se asienta sola; la sal se diluye muy despacio,
+// como si el lago se renovara con agua limpia.
+// La web usa una copia de esta misma lógica para su modo demostración (web/src/lib/maqueta.ts).
 
 export function crearSimulador() {
-  let turbidez = 8; // NTU, agua casi limpia
-  let tds = 180; // ppm
-  let basura = 0; // gramos en la canasta
-  let objetos = 0;
-  let t = 0;
+  let turbidez = 6; // NTU, agua casi limpia
+  let tds = 90; // ppm, agua de la llave en Bogotá
+
+  const redondear = () => ({ turbidez_ntu: Math.round(turbidez * 10) / 10, tds_ppm: Math.round(tds) });
 
   return {
+    tierra() {
+      turbidez += 45 + Math.random() * 40;
+    },
+    sal() {
+      tds += 160 + Math.random() * 80;
+    },
     siguiente() {
-      t++;
-      if (Math.random() < 0.22) {
-        const peso = 5 + Math.random() * 40; // tapas, empaques, botellas pequeñas
-        objetos++;
-        basura += peso;
-        turbidez += 6 + Math.random() * 18;
-        tds += 4 + Math.random() * 10;
-      }
-      turbidez = Math.max(5, turbidez * 0.97 + (Math.random() - 0.5));
-      tds += (Math.random() - 0.45) * 0.8;
-      return {
-        turbidez_ntu: Math.round(turbidez * 10) / 10,
-        tds_ppm: Math.round(tds),
-        temperatura_c: Math.round((17 + Math.sin(t / 40) * 0.8 + (Math.random() - 0.5) * 0.2) * 10) / 10,
-        basura_g: Math.round(basura),
-        objetos,
-      };
+      if (Math.random() < 0.05) this.tierra();
+      if (Math.random() < 0.015) this.sal();
+      turbidez = Math.max(4, 4 + (turbidez - 4) * 0.97 + (Math.random() - 0.5));
+      tds = 90 + (tds - 90) * 0.993 + (Math.random() - 0.5) * 2;
+      return redondear();
     },
   };
 }

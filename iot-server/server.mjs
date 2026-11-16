@@ -4,13 +4,19 @@
 //   node server.mjs --simular   → además genera lecturas simuladas cada 2 s
 //
 // El ESP32 envía:   POST http://<ip-del-portátil>:4000/lecturas
-//                   {"turbidez_ntu":12.4,"tds_ppm":340,"temperatura_c":18.2,"basura_g":85,"objetos":7}
+//                   {"turbidez_ntu":12.4,"tds_ppm":90}
+// Si el lago llega a nivel crítico, avisa por Telegram (ver alertas.mjs y .env.ejemplo).
 // La web escucha:   GET  http://localhost:4000/stream   (Server-Sent Events)
 
 import http from "node:http";
 import os from "node:os";
 import { appendFile } from "node:fs/promises";
 import { crearSimulador } from "./simulacion.mjs";
+import { cargarEnv } from "./env.mjs";
+import { crearAlertas } from "./alertas.mjs";
+
+cargarEnv();
+const alertas = crearAlertas();
 
 const PUERTO = Number(process.env.PUERTO ?? 4000);
 const ARCHIVO = new URL("./lecturas.jsonl", import.meta.url);
@@ -19,9 +25,6 @@ const HISTORIAL_MAX = 300;
 const CAMPOS = {
   turbidez_ntu: [0, 3000],
   tds_ppm: [0, 5000],
-  temperatura_c: [-5, 60],
-  basura_g: [0, 50000],
-  objetos: [0, 100000],
 };
 
 const historial = [];
@@ -32,7 +35,7 @@ function validar(cuerpo) {
   const lectura = { ts: new Date().toISOString(), origen: cuerpo.origen === "simulador" ? "simulador" : "maqueta" };
   for (const [campo, [min, max]] of Object.entries(CAMPOS)) {
     const v = Number(cuerpo[campo]);
-    if (cuerpo[campo] === undefined) continue; // campo opcional: el sensor puede no estar conectado
+    if (cuerpo[campo] === undefined) continue; // un sensor puede estar desconectado
     if (!Number.isFinite(v) || v < min || v > max) errores.push(`${campo} debe ser un número entre ${min} y ${max}`);
     else lectura[campo] = Math.round(v * 10) / 10;
   }
@@ -46,6 +49,7 @@ function registrar(lectura) {
   const msg = `event: lectura\ndata: ${JSON.stringify(lectura)}\n\n`;
   for (const res of clientes) res.write(msg);
   appendFile(ARCHIVO, JSON.stringify(lectura) + "\n").catch(() => {});
+  alertas.evaluar(lectura);
 }
 
 function cors(res) {
@@ -116,6 +120,7 @@ const servidor = http.createServer((req, res) => {
       lecturas_recibidas: historial.length,
       ultima: historial.at(-1) ?? null,
       clientes_conectados: clientes.size,
+      alerta: alertas.estado(),
     });
   }
 
@@ -130,6 +135,12 @@ servidor.listen(PUERTO, "0.0.0.0", () => {
   console.log(`\n  Servidor de la maqueta listo en el puerto ${PUERTO}`);
   console.log(`  · Web (este portátil):  http://localhost:${PUERTO}/stream`);
   for (const ip of ips) console.log(`  · ESP32 (misma WiFi):   http://${ip}:${PUERTO}/lecturas`);
+  const { turbidez_ntu, tds_ppm } = alertas.estado().umbrales;
+  console.log(
+    alertas.activa
+      ? `  · Alertas por Telegram activas (turbidez > ${turbidez_ntu} NTU o sólidos disueltos > ${tds_ppm} ppm)`
+      : "  · Alertas por Telegram apagadas: configura iot-server/.env (npm run telegram)",
+  );
 
   if (process.argv.includes("--simular")) {
     console.log("  · Modo simulación activo: una lectura cada 2 segundos\n");

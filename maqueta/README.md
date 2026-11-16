@@ -1,108 +1,111 @@
 # Maqueta del Humedal Jaboque
 
-Un modelo a escala del humedal con sensores que miden la calidad del agua y la basura que cae en él. Envía una lectura cada 2 segundos a la web.
+Un modelo a escala del humedal con dos sensores sumergidos que miden qué tan contaminada está el agua. La maqueta envía una lectura cada 2 segundos a la web. Si el lago llega a un nivel crítico, el servidor manda una alerta a los celulares por Telegram.
 
 ## Cómo funciona
 
-El agua circula en un circuito cerrado, igual que un humedal real que recibe agua de un canal y la entrega al río:
-
 ```
-   ┌──────────── manguera ─────────────┐
-   │                                   ▼
-[tanque de      [canal de entrada]→[ LAGO (sensores sumergidos) ]→[vertedero]→[canasta de malla]
- reserva] ◄── el agua escurre ──────────────────────────────────────────────┘   sobre la balanza
-   ▲ bomba sumergible                                         sensor IR cuenta cada objeto
+ [ LAGO: recipiente con agua ]          [ ESP32 ]  ── WiFi ──►  [ portátil: iot-server ] ──► web en vivo
+   sonda de turbidez ───────── cable ──► GPIO 34                        │
+   sonda TDS ───────────────── cable ──► GPIO 35                        └──► Telegram: 🚨 alerta al celular
 ```
 
-1. Una bomba pequeña lleva agua del tanque de reserva al **canal de entrada** (el "río" que alimenta el humedal).
-2. En el **lago** van sumergidos los sensores de turbidez, sólidos disueltos (TDS) y temperatura.
-3. Una **barrera flotante en V** (un tubo de espuma o una pajilla gruesa) empuja la basura que flota hacia el **vertedero de salida**.
-4. La basura cae a una **canasta de malla** apoyada sobre una **celda de carga**, que la pesa. El agua atraviesa la malla y vuelve al tanque.
-5. Un **sensor infrarrojo** en el vertedero cuenta cada objeto que pasa.
+1. Las dos sondas van sumergidas en el lago. El ESP32 queda afuera, en seco.
+2. El ESP32 lee la **turbidez** (qué tan sucia se ve el agua) y los **sólidos disueltos** (TDS: sal, químicos, contaminación que no se ve).
+3. El portátil recibe las lecturas, las muestra en la web y revisa los límites:
+   - turbidez por encima de **50 NTU**, o
+   - sólidos disueltos por encima de **500 ppm**, que es el límite de la EPA para agua de consumo.
+4. Si un valor pasa su límite durante 6 segundos seguidos, llega al grupo de Telegram un mensaje como este:
 
-Durante la presentación: se echa tierra o café molido para enturbiar el agua, sal para subir los sólidos disueltos, y tapas o trocitos de espuma de poliestireno y plástico como "basura". La web lo muestra en vivo.
+   ```
+   🚨 ALERTA · Humedal Jaboque
+   Nivel crítico de contaminación
+   ⚠️ Turbidez: 87 NTU (límite 50)
+   Sólidos disueltos: 210 ppm (límite 500)
+   16/11/26, 10:42 a. m.
+   ```
+
+   Si sigue crítico, llega un recordatorio cada 10 minutos. Cuando el agua se recupera, llega un "✅ volvió a la normalidad".
+
+**Durante la presentación:** se echa una cucharada de tierra o café molido y se revuelve, y la turbidez se dispara. Luego se disuelve una cucharadita de sal, y el TDS sube por encima de 500 en unos 6 L de agua. En los dos casos, a los pocos segundos les llega la alerta a los celulares.
 
 ## Materiales
 
-Precios aproximados en Bogotá (tiendas de electrónica de la calle 19 o tiendas en línea), noviembre de 2026.
+Precios aproximados en Bogotá (tiendas de la calle 19 o en línea), noviembre de 2026. No incluye herramientas: cautín, estaño, termoencogible y silicona.
 
 | Componente | Para qué | Precio aprox. (COP) |
 |---|---|---|
-| ESP32 DevKit V1 + cable USB | Lee los sensores y envía por WiFi | 30.000 |
+| ESP32 DevKit V1 + cable USB **de datos** (no solo de carga) | Lee los sensores y envía por WiFi | 30.000 |
 | Sensor de turbidez analógico (tipo DFRobot SEN0189) | Qué tan sucia se ve el agua | 35.000 |
-| Sensor TDS Gravity (analógico, 3,3–5 V) | Sólidos disueltos, contaminación química | 35.000 |
-| Sonda DS18B20 sumergible + resistencia de 4,7 kΩ | Temperatura del agua | 10.000 |
-| Celda de carga de 1 kg + módulo HX711 | Peso de la basura recogida | 18.000 |
-| Sensor infrarrojo de obstáculos FC-51 | Cuenta los objetos que caen | 5.000 |
-| Mini bomba sumergible 5 V + 1 m de manguera de 8 mm | Hace circular el agua | 15.000 |
-| Resistencias de 10 kΩ y 20 kΩ | Divisor de voltaje para el sensor de turbidez | 1.000 |
-| Protoboard, cables dupont macho-hembra | Conexiones | 15.000 |
-| Fuente USB de 5 V / 2 A (puede ser un cargador de celular) | Alimentación | 0–15.000 |
-| Recipiente plástico transparente (~40 × 30 × 15 cm) y un frasco grande para el tanque | Lago y reserva | 20.000 |
-| Malla plástica, espuma o pajillas, plastilina epóxica, silicona | Barrera, canasta y sellado | 15.000 |
-| **Total** | | **≈ 215.000 – 230.000** |
+| Sensor TDS Gravity analógico (3,3–5 V), con su sonda | Sólidos disueltos | 35.000 |
+| 1 resistencia de 10 kΩ y 1 de 20 kΩ (o dos de 10 kΩ en serie) | Divisor de voltaje del sensor de turbidez | 500 |
+| 6 cables dupont hembra-hembra | Unir los sensores al ESP32 | 3.000 |
+| Recipiente plástico transparente (unos 6 L, ~30 × 20 × 12 cm) | El lago | 15.000 |
+| **Total** | | **≈ 120.000** |
+
+La alimentación sale del USB del portátil. No hace falta protoboard: el divisor se suelda en el cable (ver abajo).
 
 ## Conexiones
 
-Todos los sensores comparten la tierra (GND) del ESP32.
-
 | Componente | Pin del componente | Va a |
 |---|---|---|
-| Sensor de turbidez | VCC | 5 V (pin VIN del ESP32) |
+| Sensor de turbidez | VCC | **VIN** (5 V) del ESP32 |
 | | GND | GND |
-| | Salida A (señal) | Resistencia de 10 kΩ → **GPIO 34**; de GPIO 34 sale una resistencia de 20 kΩ a GND |
-| Sensor TDS | + | 3,3 V |
-| | − | GND |
+| | Salida A (señal) | Resistencia de 10 kΩ → **GPIO 34**; de GPIO 34 sale la de 20 kΩ a GND |
+| Sensor TDS | + | **3V3** |
+| | − | GND (el otro pin GND del ESP32) |
 | | A | **GPIO 35** |
-| DS18B20 | Rojo | 3,3 V |
-| | Negro | GND |
-| | Amarillo (datos) | **GPIO 4**, con la resistencia de 4,7 kΩ entre este cable y 3,3 V |
-| HX711 | VCC | 3,3 V |
-| | GND | GND |
-| | DT | **GPIO 16** |
-| | SCK | **GPIO 17** |
-| Celda de carga → HX711 | Rojo / negro / blanco / verde | E+ / E− / A− / A+ |
-| Sensor IR FC-51 | VCC | 3,3 V |
-| | GND | GND |
-| | OUT | **GPIO 27** |
-| Mini bomba | + / − | 5 V de la fuente / GND (no la alimentes desde un pin del ESP32) |
 
-**Por qué el divisor de voltaje:** el sensor de turbidez entrega hasta 4,5 V y los pines del ESP32 aguantan máximo 3,3 V. Las dos resistencias reducen el voltaje a dos tercios.
+**Por qué el divisor:** el sensor de turbidez entrega hasta 4,5 V y los pines del ESP32 aguantan máximo 3,3 V. Las dos resistencias bajan el voltaje a dos tercios.
 
-**Cuidado con el agua:** solo las puntas de las sondas van dentro del agua. La cabeza del sensor de turbidez no es sumergible, así que fíjala con plastilina epóxica para que solo la parte inferior toque el agua. El ESP32, la protoboard y el HX711 van fuera del recipiente.
+**Divisor soldado, sin protoboard:** corta un cable dupont hembra-hembra por la mitad.
+- Suelda la resistencia de 10 kΩ en serie entre el cable que viene de la señal del sensor y el que va al GPIO 34.
+- En la punta que va al GPIO 34, suelda un extremo de la de 20 kΩ. El otro extremo va a un cable que llega a GND.
+- Cubre todo con termoencogible. Queda un arnés en "Y" de tres puntas: señal del sensor, GPIO 34 y GND.
+
+El ESP32 tiene dos pines GND en un lado y uno en el otro, así que cada sensor usa el suyo.
+
+**Cuidado con el agua:** solo las puntas de las sondas van dentro del agua. La cabeza del sensor de turbidez no es sumergible: fíjala al borde del recipiente con silicona o plastilina epóxica para que solo la parte inferior toque el agua. Separa las dos sondas unos 10 cm. El ESP32 y las placas de los sensores van fuera del recipiente.
 
 ## Programar el ESP32
 
 1. Instala [Arduino IDE 2](https://www.arduino.cc/en/software).
 2. En *Archivo → Preferencias → URLs adicionales de gestor de placas*, agrega
    `https://espressif.github.io/arduino-esp32/package_esp32_index.json`.
-   Luego, en *Herramientas → Placa → Gestor de placas*, instala **esp32** de Espressif.
-3. En *Herramientas → Gestionar librerías*, instala **OneWire**, **DallasTemperature** y **HX711** (de bogde).
-4. Abre `firmware/maqueta_jaboque/maqueta_jaboque.ino` y cambia:
+   Luego, en *Herramientas → Placa → Gestor de placas*, instala **esp32** de Espressif. No hace falta ninguna otra librería.
+3. Abre `firmware/maqueta_jaboque/maqueta_jaboque.ino` y cambia:
    - `WIFI_NOMBRE` y `WIFI_CLAVE`: la red WiFi a la que también está conectado el portátil.
    - `SERVIDOR`: la dirección que imprime `npm start` en la línea "ESP32 (misma WiFi)".
-5. Selecciona la placa **ESP32 Dev Module** y el puerto COM, y sube el programa.
-6. Abre el *Monitor serie* a 115200 baudios. Debes ver una línea JSON cada 2 segundos.
+4. Selecciona la placa **ESP32 Dev Module** y el puerto COM, y sube el programa.
+5. Abre el *Monitor serie* a 115200 baudios. Debes ver una línea JSON cada 2 segundos.
 
-> El ESP32 solo se conecta a redes de **2,4 GHz**. Las redes de las universidades con usuario y contraseña (WPA2-Enterprise) no sirven. Usa la zona WiFi de un celular, que es lo más confiable para la presentación.
+> El ESP32 solo se conecta a redes de **2,4 GHz**. Las redes de las universidades con usuario y contraseña (WPA2-Enterprise) no sirven. Usa la zona WiFi de un celular, y que **tenga datos**: el portátil necesita internet para mandar las alertas a Telegram.
 
-## Calibración (15 minutos)
+## Configurar las alertas de Telegram (10 minutos, una sola vez)
 
-**Balanza.** Con la canasta vacía, enciende el ESP32 (la tara se hace sola al arrancar). Pon un objeto de peso conocido, por ejemplo un celular que hayas pesado en una balanza de cocina, y mira cuántos gramos marca en el monitor serie. Ajusta `FACTOR_BALANZA` así:
-`nuevo factor = factor actual × (gramos que marca ÷ gramos reales)`.
+1. En Telegram, busca **@BotFather**, escribe `/newbot` y sigue los pasos. Al final te da un **token**, algo como `7412345678:AAH...`.
+2. En `iot-server/`, copia `.env.ejemplo` como `.env` y pega el token en `TELEGRAM_TOKEN`.
+3. Crea un **grupo** en Telegram con la profesora, el equipo y el bot. Escribe cualquier mensaje en el grupo, por ejemplo "hola".
+4. Corre `npm run telegram` en `iot-server/`. Te muestra el número del grupo, que empieza con `-`. Pégalo en `TELEGRAM_CHAT_ID` dentro de `.env`.
+5. Corre `npm run telegram` otra vez. Debe llegar un mensaje de prueba al grupo.
 
-**Turbidez.** Sumerge el sensor en agua limpia de la llave. Si marca más de 5 NTU, sube `AJUSTE_TURBIDEZ` de 0,05 en 0,05 hasta que marque cerca de 0. Este sensor es para mostrar cambios relativos, no para medir como un laboratorio, y eso vale la pena decirlo en la sustentación.
+Los límites y cada cuánto se repite el aviso se cambian en el mismo `.env`. El archivo `.env` no se sube a GitHub porque el token es secreto.
 
-**TDS.** El agua de la llave de Bogotá debe dar entre 30 y 120 ppm. Al disolver una cucharadita de sal en el lago, el valor tiene que subir de forma clara.
+Para probar sin la maqueta, corre `npm run demo`: las lecturas simuladas se enturbian solas y en uno o dos minutos llega una alerta marcada "(simulación)".
 
-**Contador.** Gira el potenciómetro del FC-51 hasta que su LED se encienda solo cuando un objeto pasa frente a él, a unos 2 o 3 cm.
+## Calibración (10 minutos)
+
+**Turbidez.** Sumerge el sensor en agua limpia de la llave. Si marca más de 5 NTU, sube `AJUSTE_TURBIDEZ` de 0,05 en 0,05 hasta que marque cerca de 0. Este sensor sirve para mostrar cambios relativos, no para medir como un laboratorio. Vale la pena decirlo en la sustentación.
+
+**TDS.** El agua de la llave de Bogotá debe dar entre 30 y 120 ppm. Al disolver una cucharadita de sal, el valor tiene que subir de forma clara. Si pasa de 500 con muy poca sal o no llega nunca, ajusta `UMBRAL_TDS` en `.env`.
 
 ## Antes de la presentación
 
-- [ ] El portátil y el ESP32 están en la misma red (la zona WiFi del celular).
-- [ ] En el portátil: `cd iot-server` y `npm start`. Anota la IP que aparece.
+- [ ] El portátil y el ESP32 están en la misma red: la zona WiFi del celular, con datos.
+- [ ] En el portátil: `cd iot-server` y `npm start`. Anota la IP y revisa que diga "Alertas por Telegram activas".
 - [ ] La IP del firmware coincide. Si cambió, actualízala y vuelve a subir el programa.
-- [ ] Abre la web **en el mismo portátil** y busca "Maqueta conectada" en verde.
+- [ ] Abre la web **en el mismo portátil, en Chrome**, y, en la pantalla "Maqueta en vivo", busca "Maqueta conectada" con el punto verde.
       Chrome puede pedir permiso para "acceder a dispositivos de la red local": acéptalo.
+- [ ] Los celulares que van a recibir la alerta están en el grupo y tienen las notificaciones activas.
 - [ ] Si algo falla, la web pasa sola al modo demostración y sigue funcionando.
-      También puedes correr `npm run demo` para mostrar el servidor con lecturas simuladas.
+      `npm run demo` también manda alertas de Telegram con lecturas simuladas.
