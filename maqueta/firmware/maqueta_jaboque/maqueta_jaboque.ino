@@ -181,6 +181,7 @@ void setup() {
 
   WiFi.mode(WIFI_STA);
   WiFi.setAutoReconnect(true);
+  WiFi.setSleep(false);  // sin ahorro de energía: la radio no se duerme y los envíos no se atrasan
   WiFi.begin(WIFI_NOMBRE, WIFI_CLAVE);
 }
 
@@ -204,9 +205,10 @@ void loop() {
   }
 
   HTTPClient http;
-  // Si el portátil está apagado o la IP es otra, no bloquear la maqueta más de 1,5 s.
-  http.setConnectTimeout(1500);
-  http.setTimeout(1500);
+  // Si el portátil está apagado o la IP es otra, no bloquear la maqueta más de unos segundos.
+  // 3 s da margen a redes lentas (como la zona WiFi de un celular) sin perder demasiadas lecturas.
+  http.setConnectTimeout(3000);
+  http.setTimeout(3000);
   http.begin(SERVIDOR);
   http.addHeader("Content-Type", "application/json");
   int codigo = http.POST(json);
