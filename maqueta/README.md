@@ -83,6 +83,42 @@ El diagrama también está en [`diagrama-conexiones.svg`](diagrama-conexiones.sv
 | | SCL | **GPIO 22** |
 | | SDA | **GPIO 21** |
 
+Algunas pantallas dicen **VDD** en vez de VCC y **SCK** en vez de SCL: son lo mismo.
+
+### Pin por pin del ESP32
+
+La misma información, vista desde el ESP32: qué llega a cada pin y cuáles se comparten. Solo se usan 8 pines; los demás quedan libres.
+
+| Pin del ESP32 | Qué llega | ¿Compartido? |
+|---|---|---|
+| **VIN** (5 V) | VCC del sensor de turbidez | No |
+| **GND** junto a VIN | GND del sensor de turbidez **y** R2 (10 kΩ) | Sí: el cable GND del sensor y la punta de R2 se unen antes de llegar al pin |
+| **D34** | Señal de turbidez, después de R1 (20 kΩ), **y** la otra punta de R2 | Sí: R1 y R2 se unen en el cable que llega a D34 |
+| **3V3** | + del sensor TDS **y** VCC/VDD de la pantalla | Sí: "Y" de 3V3 |
+| **GND** junto a 3V3 | − del sensor TDS **y** GND de la pantalla | Sí: "Y" de GND |
+| **D35** | Señal A del sensor TDS | No |
+| **D21** | SDA de la pantalla | No |
+| **D22** | SCL (SCK) de la pantalla | No |
+
+Al final hay **tres uniones** y la **resistencia R1** en serie:
+
+1. **Unión de D34:** la punta de salida de R1, una punta de R2 y el cable que va a D34.
+2. **"Y" de 3V3:** un cable desde el pin 3V3 que se abre en dos, uno al + del TDS y otro al VCC de la pantalla.
+3. **"Y" de GND:** un cable desde el GND junto a 3V3 que se abre en dos, uno al − del TDS y otro al GND de la pantalla.
+
+Y la otra punta de R2 va al cable GND del sensor de turbidez, que llega al GND junto a VIN.
+
+**No mezcles los dos lados:** el sensor de turbidez va con **VIN (5 V)** y el GND de la izquierda. El TDS y la pantalla van con **3V3** y el GND de la derecha. Si la pantalla o el TDS se conectan a VIN, reciben 5 V en vez de 3,3 V.
+
+**Cómo hacer una "Y":** pela 1 cm de la punta de los tres cables, tuerce juntas las tres puntas, suelda y cubre con termoencogible o cinta aislante. Si prefieres no soldar, una mini protoboard hace lo mismo: el cable del pin entra en una fila y los otros dos se pinchan en esa misma fila.
+
+**Orden recomendado para conectar** (con el USB desconectado):
+
+1. Pantalla: ya funciona, déjala como está.
+2. Sensor TDS: arma las dos "Y" con los cables de la pantalla y conecta la señal a D35.
+3. Sensor de turbidez: suelda R1 y R2, pon el interruptor en "A" y conecta VIN, GND y D34.
+4. Revisa cada cable contra la tabla y conecta el USB.
+
 **Por qué el divisor:** el sensor de turbidez entrega hasta 4,5 V y los pines del ESP32 aguantan máximo 3,3 V. R1 (20 kΩ) y R2 (10 kΩ) lo bajan a un tercio (4,5 V → 1,5 V), dentro de la zona en que el ESP32 mide con precisión. **No las inviertas:** con la de 10 kΩ hacia el sensor llegarían 3 V al pin y la lectura saldría mal.
 
 Las resistencias se distinguen por sus franjas de colores (o con el multímetro en Ω):
@@ -103,7 +139,7 @@ Si en cambio usas dos de 10 kΩ, da lo mismo cuál va dónde, pero en el firmwar
 
 El ESP32 DevKit V1 de 30 pines tiene un GND a cada lado: el sensor de turbidez usa el que está junto a VIN y el TDS el que está junto a 3V3. Si tu placa es de 38 pines, el orden cambia: guíate por el nombre impreso en cada pin.
 
-**Cuidado con el agua:** solo las puntas de las sondas van dentro del agua. La cabeza del sensor de turbidez no es sumergible: fíjala al borde del recipiente con silicona o plastilina epóxica para que solo la parte inferior (la ranura) quede bajo el agua, sin tocar el fondo. Separa las sondas al menos 3 o 4 cm. El ESP32, las placas de los sensores y la pantalla van fuera del recipiente.
+**Cuidado con el agua:** solo las puntas de las sondas van dentro del agua. La cabeza del sensor de turbidez no es sumergible: fíjala al borde del recipiente con silicona o plastilina epóxica para que solo la parte inferior (la ranura) quede bajo el agua, sin tocar el fondo. Separa las sondas unos 10 cm, como en el diagrama. El ESP32, las placas de los sensores y la pantalla van fuera del recipiente.
 
 ### Con un vaso de 500 ml en vez de 6 L
 
