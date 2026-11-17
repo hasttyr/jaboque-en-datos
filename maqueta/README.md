@@ -50,7 +50,7 @@ Precios aproximados en Bogotá (tiendas de la calle 19 o en línea), noviembre d
 | 1 | Sensor de turbidez analógico (tipo DFRobot SEN0189), con su placa adaptadora | Qué tan sucia se ve el agua | 35.000 |
 | 1 | Sensor TDS Gravity analógico (3,3–5 V), con su sonda y su placa | Sólidos disueltos | 35.000 |
 | 1 | Pantalla OLED 0,96" **SSD1306 I2C** (128 × 64, **4 pines**) | Muestra las lecturas y el estado en la maqueta | 12.000 – 20.000 |
-| 2 | Resistencias de **10 kΩ** (compra unas cuantas de repuesto) | Divisor de voltaje del sensor de turbidez | 500 |
+| 2 | Resistencias: una de **20 kΩ** y una de **10 kΩ** (sirven también dos de 10 kΩ; ver abajo) | Divisor de voltaje del sensor de turbidez | 500 |
 | ~14 | Cables dupont **hembra-hembra** (6 para los sensores, 4 para la pantalla y unos 4 para los empalmes soldados) | Unir todo al ESP32 | 5.000 |
 | 1 | Recipiente plástico transparente: unos 6 L (~30 × 20 × 12 cm) o un vaso de 500 ml (ver abajo) | El lago | 0 – 15.000 |
 | | **Total** | | **≈ 130.000 – 155.000** |
@@ -74,7 +74,7 @@ El diagrama también está en [`diagrama-conexiones.svg`](diagrama-conexiones.sv
 | Sensor de turbidez | Interruptor de la placa | En **"A"** (analógico). En "D" la lectura salta entre 0 y "más de 1000" |
 | | VCC | **VIN** (5 V) del ESP32 |
 | | GND | GND (el que está junto a VIN) |
-| | Salida A (señal) | Resistencia de 10 kΩ → **GPIO 34**; de GPIO 34 sale la otra de 10 kΩ al cable GND del sensor |
+| | Salida A (señal) | R1 de 20 kΩ → **GPIO 34**; de GPIO 34 sale R2 de 10 kΩ al cable GND del sensor |
 | Sensor TDS | + | **3V3** |
 | | − | GND (el que está junto a 3V3) |
 | | A | **GPIO 35** |
@@ -83,11 +83,20 @@ El diagrama también está en [`diagrama-conexiones.svg`](diagrama-conexiones.sv
 | | SCL | **GPIO 22** |
 | | SDA | **GPIO 21** |
 
-**Por qué el divisor:** el sensor de turbidez entrega hasta 4,5 V y los pines del ESP32 aguantan máximo 3,3 V. Dos resistencias iguales bajan el voltaje a la mitad (4,5 V → 2,25 V), justo en la zona en que el ESP32 mide con precisión.
+**Por qué el divisor:** el sensor de turbidez entrega hasta 4,5 V y los pines del ESP32 aguantan máximo 3,3 V. R1 (20 kΩ) y R2 (10 kΩ) lo bajan a un tercio (4,5 V → 1,5 V), dentro de la zona en que el ESP32 mide con precisión. **No las inviertas:** con la de 10 kΩ hacia el sensor llegarían 3 V al pin y la lectura saldría mal.
+
+Las resistencias se distinguen por sus franjas de colores (o con el multímetro en Ω):
+
+| Resistencia | 4 franjas | 5 franjas |
+|---|---|---|
+| 20 kΩ (R1) | rojo, negro, naranja, dorado | rojo, negro, negro, rojo, marrón |
+| 10 kΩ (R2) | marrón, negro, naranja, dorado | marrón, negro, negro, rojo, marrón |
+
+Si en cambio usas dos de 10 kΩ, da lo mismo cuál va dónde, pero en el firmware cambia `DIVISOR_TURBIDEZ` a `2.0`.
 
 **Divisor soldado, sin protoboard:**
-- Suelda una resistencia de 10 kΩ en serie entre el cable que viene de la señal del sensor y el que va al GPIO 34.
-- En la punta que va al GPIO 34, suelda un extremo de la segunda resistencia de 10 kΩ. El otro extremo se suelda al **cable GND del sensor de turbidez** (el que va al GND junto a VIN).
+- Suelda **R1 (20 kΩ)** en serie entre el cable que viene de la señal del sensor y el que va al GPIO 34.
+- En la punta que va al GPIO 34, suelda un extremo de **R2 (10 kΩ)**. El otro extremo se suelda al **cable GND del sensor de turbidez** (el que va al GND junto a VIN).
 - Cubre todo con termoencogible.
 
 **Pines de la pantalla:** el orden GND, VCC, SCL, SDA cambia entre fabricantes. **Guíate por lo que está impreso en la pantalla**, no por el orden del diagrama: si VCC y GND quedan al revés, la pantalla se daña.

@@ -35,9 +35,10 @@ const int PIN_SCL      = 22;
 const int PIN_LED      = 2;   // LED integrado: parpadea en cada envío
 
 // ---------- Calibración (ver maqueta/README.md) ----------
-// Divisor de dos resistencias iguales (10 kΩ + 10 kΩ): el pin recibe la mitad del voltaje.
-// Así los 4,5 V del sensor quedan en 2,25 V, dentro de la zona en que el ADC del ESP32 es preciso.
-const float DIVISOR_TURBIDEZ = 2.0;   // V_sensor = V_pin * 2
+// Divisor de voltaje: R1 de 20 kΩ (del sensor a D34) y R2 de 10 kΩ (de D34 a GND).
+// El pin recibe un tercio del voltaje: los 4,5 V del sensor quedan en 1,5 V, dentro de la zona
+// en que el ADC del ESP32 es preciso. Con dos de 10 kΩ iguales, pon 2.0.
+const float DIVISOR_TURBIDEZ = 3.0;   // V_sensor = V_pin * 3
 // Con agua limpia, la curva espera 4,2 V. Mira en el monitor serie el voltaje del sensor con agua
 // limpia y pon aquí 4,2 menos ese valor (por ejemplo, si marca 4,05 V, pon 0.15).
 const float AJUSTE_TURBIDEZ  = 0.0;
